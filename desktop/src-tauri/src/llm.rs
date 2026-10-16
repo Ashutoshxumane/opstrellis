@@ -154,6 +154,25 @@ pub fn accept_cleanup(input: &str, output: &str, rewrite: bool) -> bool {
     o > 0 && o <= i * 2 + 80 && !(i > 40 && o < i / 4)
 }
 
+/// The first of the user's dictionary terms that was said (it is in `input`) but is missing from a
+/// cleanup's `output`: the model reworded or dropped it. Whole words, ignoring case (the dictionary
+/// pass after the AI restores the exact spelling).
+pub fn lost_term<'a>(input: &str, output: &str, terms: &'a [String]) -> Option<&'a str> {
+    let (input, output) = (input.to_lowercase(), output.to_lowercase());
+    terms.iter().map(|t| t.trim()).find(|t| {
+        let t = t.to_lowercase();
+        !t.is_empty() && has_word(&input, &t) && !has_word(&output, &t)
+    })
+}
+
+fn has_word(text: &str, word: &str) -> bool {
+    text.match_indices(word).any(|(i, _)| {
+        let before = text[..i].chars().next_back();
+        let after = text[i + word.len()..].chars().next();
+        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+    })
+}
+
 /// Command output replaces the user's selection (or is inserted): never with nothing, and never
 /// with something absurdly long (a model stuck repeating itself).
 pub fn check_command_output(selection: Option<&str>, output: &str) -> Result<()> {
@@ -213,6 +232,18 @@ mod tests {
         assert!(accept_cleanup("a reasonably long dictated paragraph about the quarterly plan and goals", "- Q3 plan", true));
         assert!(!accept_cleanup("short", &"x".repeat(300), true));
         assert!(!accept_cleanup("short", " ", true));
+    }
+
+    #[test]
+    fn dictionary_terms_survive_cleanup() {
+        let terms: Vec<String> = ["Karol".into(), "feature/nest_dev".into(), "OpsTrellis".into(), "  ".into()].into();
+        let said = "um so Karol pushed feature/nest_dev to OpsTrellis";
+        assert_eq!(lost_term(said, "Karol pushed feature/nest_dev to OpsTrellis.", &terms), None);
+        assert_eq!(lost_term(said, "karol pushed feature/nest_dev to opstrellis.", &terms), None, "case is restored afterwards");
+        assert_eq!(lost_term(said, "Carol pushed feature/nest_dev to OpsTrellis.", &terms), Some("Karol"), "reworded");
+        assert_eq!(lost_term(said, "Karol pushed the branch to OpsTrellis.", &terms), Some("feature/nest_dev"), "dropped");
+        assert_eq!(lost_term(said, "Karolina pushed feature/nest_dev to OpsTrellis.", &terms), Some("Karol"), "part of another word isn't the term");
+        assert_eq!(lost_term("nothing from the dictionary here", "Nothing here.", &terms), None, "terms not said don't count");
         assert!(check_command_output(Some("hello"), "  ").is_err());
         assert!(check_command_output(Some("hello"), &"y".repeat(20_001)).is_err());
         assert!(check_command_output(None, "Dear Sam, …").is_ok());
