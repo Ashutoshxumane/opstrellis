@@ -116,7 +116,9 @@ gateway.post(
             await recordGatewayEvent(user, { model, status: 'error', latencyMs: Date.now() - t0 });
           }
         }
-        throw new ApiError(502, 'upstream_error', lastError);
+        console.warn(`stt failed: ${lastError}`);
+        console.warn(`llm failed: ${lastError}`);
+      throw new ApiError(502, 'upstream_error', 'All providers for this model failed; try again later');
       },
       MAX_IN_FLIGHT,
     );
@@ -150,7 +152,11 @@ gateway.post('/chat/completions', bodyLimit({ maxSize: 1024 * 1024 }), async (c)
     async () => {
       const remaining = PLANS[user.plan].llmTokensPerPeriod - (await llmTokens(user.id, currentPeriod(user)));
       if (remaining <= 0) throw new ApiError(402, 'quota_exceeded', 'LLM token allowance for this period is used up');
-      const body = { ...params, n: 1, max_tokens: Math.min(max_tokens ?? MAX_OUTPUT_TOKENS, MAX_OUTPUT_TOKENS, remaining) };
+      // Input tokens count against the allowance too: estimate them (about 4 bytes a token) so one
+      // large prompt can't run far past what is left.
+      const outputLeft = remaining - Math.ceil(JSON.stringify(params).length / 4);
+      if (outputLeft <= 0) throw new ApiError(402, 'quota_exceeded', 'This request is larger than the LLM token allowance left for this period');
+      const body = { ...params, n: 1, max_tokens: Math.min(max_tokens ?? MAX_OUTPUT_TOKENS, MAX_OUTPUT_TOKENS, outputLeft) };
 
       let lastError = 'no provider is configured for this model';
       for await (const { model, key } of attempts(chain, LLM_ADAPTERS)) {
@@ -166,7 +172,7 @@ gateway.post('/chat/completions', bodyLimit({ maxSize: 1024 * 1024 }), async (c)
           await recordGatewayEvent(user, { model, status: 'error', latencyMs: Date.now() - t0 });
         }
       }
-      throw new ApiError(502, 'upstream_error', lastError);
+      throw new ApiError(502, 'upstream_error', 'All providers for this model failed; try again later');
     },
     MAX_IN_FLIGHT,
   );
