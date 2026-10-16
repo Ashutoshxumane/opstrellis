@@ -216,7 +216,18 @@ describe('POST /v1/chat/completions', () => {
     const ask = () => req('/v1/chat/completions', { token, json: { model: 'openai/gpt-4o-mini', messages: [{ role: 'user', content: 'Hi' }] } });
     const results = await Promise.all([ask(), ask(), ask()]);
     expect(results.map((r) => r.status).sort()).toEqual([200, 200, 402]);
-    expect(seen.map((s) => JSON.parse(s.body.toString()).max_tokens)).toEqual([1600, 100]);
+    // The prompt's estimated tokens (about 4 bytes each) come off what is left.
+    const prompt = Math.ceil(JSON.stringify({ messages: [{ role: 'user', content: 'Hi' }] }).length / 4);
+    expect(seen.map((s) => JSON.parse(s.body.toString()).max_tokens)).toEqual([1600 - prompt, 100 - prompt]);
+  });
+
+  it('rejects a prompt larger than the allowance left', async () => {
+    const { token, user } = await userWithToken();
+    await db.insert(usageEvents).values({ id: randomUUID(), userId: user.id, source: 'gateway', mode: 'cloud', kind: 'llm', provider: 'openai', model: 'openai/gpt-4o-mini', inputTokens: 200_000 - 100 });
+    seen.length = 0;
+    const res = await req('/v1/chat/completions', { token, json: { model: 'openai/gpt-4o-mini', messages: [{ role: 'user', content: 'x'.repeat(2000) }] } });
+    expect(res.status).toBe(402);
+    expect(seen).toHaveLength(0);
   });
 
   it('rejects streaming and unknown models', async () => {
