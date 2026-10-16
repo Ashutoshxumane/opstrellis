@@ -1,0 +1,63 @@
+[package]
+name = "opstrellis"
+version = "0.2.0"
+description = "Voice dictation for every app"
+edition = "2021"
+license = "PolyForm-Noncommercial-1.0.0"
+
+[lib]
+name = "opstrellis_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "process"] }
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
+tokio-tungstenite = { version = "0.28", features = ["native-tls"] }
+futures-util = "0.3"
+anyhow = "1"
+log = "0.4"
+env_logger = "0.11"
+cpal = "0.18"
+hound = "3.5"
+enigo = "0.6"
+arboard = { version = "3.6", features = ["wayland-data-control"] }
+keyring = { version = "3", features = ["apple-native", "sync-secret-service", "crypto-rust"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
+active-win-pos-rs = "0.9"
+sherpa-rs = { version = "0.6.8", default-features = false, features = ["download-binaries"] }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+regex = "1"
+dirs = "6"
+bzip2 = "0.6"
+tar = "0.4"
+base64 = "0.22"
+sha2 = "0.10"
+urlencoding = "2"
+# Local AI polish (S1-mini): llama.cpp, statically linked, CPU by default.
+llama-cpp-2 = { version = "=0.1.158", default-features = false }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+macos-accessibility-client = "0.0.1"
+# Link sherpa-onnx statically on macOS so there are no dylibs to bundle as frameworks.
+sherpa-rs = { version = "0.6.8", default-features = false, features = ["download-binaries", "static"] }
+llama-cpp-2 = { version = "=0.1.158", default-features = false, features = ["metal"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+cpal = { version = "0.18", features = ["pulseaudio"] }
