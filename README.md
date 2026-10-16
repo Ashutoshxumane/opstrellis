@@ -1,0 +1,260 @@
+<p align="center">
+  <img src="desktop/src-tauri/icons/128x128@2x.png" width="96" alt="OpsTrellis icon">
+</p>
+
+<h1 align="center">OpsTrellis</h1>
+
+<p align="center">
+  <b>Voice dictation for macOS and Linux.</b><br>
+  Hold a key, speak, let go: clean, formatted text appears in any app. Offline by default.
+</p>
+
+<p align="center">
+  <a href="https://github.com/mtr1920/opstrellis/releases/latest"><img src="https://img.shields.io/github/v/release/mtr1920/opstrellis?label=release" alt="Latest release"></a>
+  <a href="https://github.com/mtr1920/opstrellis/actions/workflows/ci.yml"><img src="https://github.com/mtr1920/opstrellis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/mtr1920/opstrellis/releases"><img src="https://img.shields.io/github/downloads/mtr1920/opstrellis/total?label=downloads" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue" alt="macOS | Linux">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-free%20for%20personal%20use-green" alt="Free for personal use"></a>
+</p>
+
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#first-five-minutes">Get started</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="#license">License</a>
+</p>
+
+<p align="center">
+  <img src="docs/images/pill.png" width="560" alt="The OpsTrellis recording pill showing live text while dictating">
+</p>
+
+- **Works in every app:** your editor, a terminal, a browser, email, chat or an AI assistant, with
+  live text in a small recording pill while you speak.
+- **Private by default:** transcribes offline on your computer out of the box. Cloud providers
+  (OpenAI, Deepgram, AssemblyAI and more) are optional and use your own keys.
+- **Writes like you would:** removes "um"s, fixes self-corrections, keeps code names and paths
+  intact, and adapts its tone per app. Optional AI polish runs offline too.
+- **Built for developers:** knows `kubectl` from "cube control", writes `main.rs` when you say
+  "main dot rs", and cleans up prompts for ChatGPT, Claude, Cursor or Claude Code.
+
+<p align="center">
+  <img src="docs/images/home.png" width="49%" alt="Home: dictation history and stats">
+  <img src="docs/images/settings.png" width="49%" alt="Settings: shortcuts and general options">
+</p>
+
+Free for personal use; commercial use needs a license (see [License](#license)).
+If OpsTrellis saves you some typing, a ⭐ helps others find it.
+
+## Install
+
+macOS (Apple silicon, macOS 11 or later) or Linux (x86_64, glibc 2.35 or later, e.g. Ubuntu
+22.04+):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/mtr1920/opstrellis/main/install.sh | bash
+```
+
+That's it. Run the same command again any time to update; your settings, history, models and keys
+are kept. To check the installed version, run `opstrellis --version` or open Settings → About.
+
+<details>
+<summary>What the installer does, and other options</summary>
+
+- macOS: installs `OpsTrellis.app` into `/Applications`. Linux: installs the AppImage into
+  `~/.local/share/opstrellis` with an app-menu entry.
+- Adds an `opstrellis` command in `~/.local/bin`.
+- Downloads the latest [release](https://github.com/mtr1920/opstrellis/releases) and checks it
+  against the release's SHA-256 checksums before installing anything.
+- `OPSTRELLIS_VERSION=v0.2.0` installs a specific release.
+- You can also download the `.dmg` (macOS) or `.deb` / AppImage (Linux) from the
+  [releases page](https://github.com/mtr1920/opstrellis/releases) yourself.
+
+</details>
+
+## First five minutes
+
+1. **Open OpsTrellis.** Onboarding suggests the offline *Moonshine Tiny* model (about 100 MB), so
+   you can dictate without any account or API key.
+2. **Allow permissions (macOS).** Microphone; **Accessibility** to paste into other apps; and
+   **Input Monitoring** only if you use a single key such as 🌐 fn as your shortcut. You can
+   check them any time in Settings → Permissions.
+3. **Dictate.** Click into any text field, **hold `Ctrl+Shift+Space`**, speak, and let go.
+
+> **macOS note:** the app isn't signed with an Apple Developer ID yet. After an update, macOS may
+> ask for Accessibility and Input Monitoring again. If pasting stops working, remove OpsTrellis in
+> System Settings → Privacy & Security → Accessibility and add it again.
+
+## Everyday use
+
+| Shortcut (default) | What it does |
+|---|---|
+| Hold **Ctrl+Shift+Space** | Talk while held; the text is inserted when you let go. |
+| Tap **Ctrl+Shift+Space** | Hands-free: keeps listening until you tap again. |
+| **Esc** | Cancels the current recording. |
+| Hold **Ctrl+Alt+Space** | Command mode: select text and say how to change it ("make this more formal"). |
+| **Ctrl+Alt+V** | Pastes your last transcript again. |
+
+- **Use a single key (macOS):** in Settings → Shortcuts, set dictation to **🌐 fn**, Right ⌘,
+  Right ⌥, Right ⌃ or Right ⇧. Hold it to talk; double-tap for hands-free and press again to
+  finish. With 🌐 fn, macOS's own 🌐 action is switched off while it's your shortcut and restored
+  afterwards.
+- **Always-on fallback:** if you change the dictation shortcut, **Ctrl+Shift+Space** keeps working
+  as a backup. Press it to start, press it again to finish.
+- **Menu bar only:** turn off Settings → General → **Show in Dock** and OpsTrellis disappears from
+  the Dock and ⌘Tab (Linux: the dock and taskbar). It keeps running and opens from its menu bar /
+  tray icon.
+- **Voice commands while dictating:** "new line", "new paragraph", "scratch that", "press enter".
+- **Wayland:** compositors don't let apps grab keys, so bind `opstrellis --toggle`,
+  `opstrellis --command` and `opstrellis --cancel` to shortcuts in your desktop settings.
+
+## Features
+
+<details open>
+<summary><b>Dictation</b></summary>
+
+| | |
+|---|---|
+| System-wide dictation | Works in any app: push-to-talk or hands-free (hands-free stops after 2 minutes of silence or at 30 minutes). A shortcut pastes the last transcript, also with history off. |
+| Recording pill | Shows when the mic is actually listening (the start sound plays then, so no words are lost on slow Bluetooth mics), a live waveform, the stage (transcribing, polishing), a timer in hands-free mode, and how it ended: "Inserted · 0.6 s", or what went wrong and where the text went. |
+| Insertion | Pastes through the clipboard, then restores your clipboard. Uses Ctrl+Shift+V in terminals and `wtype`/`ydotool` on Wayland, or can type instead of paste. If you switch windows while it's processing, the text goes to your clipboard with a notice instead of into the wrong window. If insertion fails, the text is left on the clipboard. |
+| Real-time | Streams audio to Deepgram, AssemblyAI or OpenAI Realtime while you speak, with live text in the pill. Local models show live text too. The final text is inserted once, on release. |
+| Cleanup | Removes fillers, handles voice commands, applies your dictionary (`nest dev → feature/nest_dev`) and snippets. Dictionary entries keep their exact spelling through capitalization, tone and AI (`kubectl` stays lowercase at a sentence start). Spoken symbols become characters where they're clearly code: file and domain names everywhere (`main dot rs` → `main.rs`), identifiers, paths and flags in editors, terminals and AI prompts (`src slash app`, `user underscore id`, `dash dash watch`), never next to ordinary words ("the dot product"). |
+| AI polish | Optional: grammar, self-corrections ("2pm, actually 3pm"), lists, while keeping code identifiers intact in editors and terminals. Use any OpenAI-compatible endpoint, Anthropic, OpsTrellis Cloud, or the offline model below. |
+| Offline AI polish | **S1-mini by Superwhisper**, a small model trained only to clean up transcripts, runs on your computer with llama.cpp. Downloaded on demand (484 MB, pinned and checksum-verified), about 1 GB of memory while selected, English only. Code editors, terminals and other languages keep the rule-based text. If it's slow (10 s cap) or returns something implausible, the rule-based text is inserted and the pill says why. |
+| Style per app | Personal, work, email, AI prompts and other categories, each formal, casual, very casual or excited, with optional "how you write here" notes for AI polish. The category comes from the focused app and window title; Style → Apps lets you correct it. |
+| AI prompts | Dictating to ChatGPT, Claude, Cursor or an AI agent in a terminal (Claude Code, Codex, Aider, Gemini CLI) gets prompt cleanup: instructions kept, file names, paths and flags written as code, and optional light structure (Goal, Context, Constraints) for long prompts. |
+| Auto action | Optional, per app category: run an action such as "Polish" or "Make formal" on every dictation before it's inserted. Off by default; never in a plain terminal shell. |
+| Command mode | Select text, hold the command shortcut and say what to do, or name a saved action (Library → Actions). With nothing selected, it writes new text. Actions can copy their result instead: select a message and say "reply saying Thursday works" or "summarize". |
+| Snippets | A spoken trigger expands to saved text, with `{date}`, `{weekday}`, `{time}` and `{clipboard}` placeholders. |
+| Auto-learn dictionary | Optional: correct a dictation in History and misheard words become dictionary entries (`Karl → Karol`). Changes that don't sound like mis-hearings are learned only when you make them twice; common words are never turned into replacements; Undo restores the dictionary. |
+| Tech terms | About 300 developer and workplace terms (`kubectl`, `PostgreSQL`, `Next.js`, `Jira`, `OKR`). Common mis-hearings are fixed (`cube control → kubectl`); your own dictionary and snippets always win. |
+| Notetaker | Records meetings from the mic, optionally mixed with system audio (PulseAudio monitor or BlackHole), transcribes while recording, and saves a note with an AI summary (General, Sales call, Interview, 1:1, Standup). Then drafts a follow-up email or a CRM note, or copies the action items. |
+| History and Insights | Search and correct past dictations, compare the original transcript with the polished text, polish again with AI. Insights shows words, WPM, fixes, streaks, a heatmap and app categories. |
+| Multilingual | Auto-detect or a fixed language. Multilingual local models: Whisper (99 languages), Parakeet v3 (25 European languages) and SenseVoice. |
+
+</details>
+
+<details>
+<summary><b>Speech-to-text and AI providers</b></summary>
+
+| Speech-to-text provider | Batch | Streaming |
+|---|---|---|
+| Local models (sherpa-onnx): Moonshine, Parakeet, Whisper, SenseVoice | Yes | Live text |
+| OpenAI and any OpenAI-compatible endpoint (Groq, Fireworks, speaches, whisper.cpp, vLLM) | Yes | Yes |
+| Deepgram | Yes | Yes |
+| AssemblyAI | Yes | Yes |
+| Google Cloud Speech | Yes | No |
+| Azure Speech | Yes | No |
+| ElevenLabs Scribe | Yes | No |
+| OpsTrellis Cloud | Yes | No |
+
+- Providers form an ordered **fallback chain**: if one fails, the next one takes over, and a
+  failed live stream falls back to sending the recording in one piece.
+- Your dictionary is passed to each provider as vocabulary hints.
+- **AI polish / command mode:** any OpenAI-compatible endpoint (OpenAI, Groq, OpenRouter, Ollama,
+  LM Studio, vLLM), Anthropic, OpsTrellis Cloud, or offline S1-mini.
+- API keys are stored in the macOS Keychain or the Linux Secret Service.
+
+</details>
+
+## Privacy
+
+- Out of the box, transcription runs **on your computer**; nothing is sent anywhere.
+- Your API keys never leave your device except in requests to the provider you chose.
+- The microphone is open only while recording. Audio is never stored.
+- History can be kept forever, 30 days, 7 days, or turned off.
+- The log (Settings → About → Show logs) has timings and errors, never what you said or typed.
+- Optional usage sync to OpsTrellis Cloud sends counts and durations only, never text, and can be
+  turned off.
+
+## OpsTrellis Cloud (optional, self-hosted)
+
+`server/` is a server you can run yourself to give a team one managed gateway:
+
+- An OpenAI-compatible speech-to-text and LLM gateway (`/v1/audio/transcriptions`,
+  `/v1/chat/completions`) with quotas, metering, a provider fallback chain and a self-hosted
+  local model.
+- Accounts, device sign-in from the desktop app, and API tokens.
+- Usage and cost tracking, Stripe subscriptions with metered overage, admin pages and a web
+  dashboard.
+
+```sh
+cd server
+cp .env.example .env          # set MASTER_KEY, provider keys, optional Stripe keys
+docker compose up --build     # Postgres + server on :8787
+```
+
+In the desktop app, open **Settings → Account**, set the server URL and sign in, then add
+"OpsTrellis Cloud" as a transcription or AI provider. Full details:
+[server/README.md](server/README.md). Running the server for customers or as a paid service needs a
+[commercial license](COMMERCIAL-LICENSE.md).
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Text isn't pasted; it ends up on the clipboard | Grant **Accessibility** (macOS). After an update, remove OpsTrellis from the list and add it again. |
+| 🌐 fn or another single-key shortcut does nothing | Grant **Input Monitoring**, then quit and reopen OpsTrellis. **Ctrl+Shift+Space** works meanwhile. |
+| "You switched to …", text on the clipboard | The focused window changed while processing, so OpsTrellis didn't paste into the wrong place. Paste with ⌘V / Ctrl+V. |
+| Slow or wrong results | Settings → Transcription: try another model or provider. Settings → About → **Show logs** shows the time each step took. |
+| Shortcuts don't work on Wayland | Bind the `opstrellis --toggle / --command / --cancel` commands in your desktop's keyboard settings. |
+
+Found a bug or have an idea? [Open an issue](https://github.com/mtr1920/opstrellis/issues).
+
+## Development
+
+```sh
+# Linux build dependencies (Ubuntu/Debian)
+sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+  libasound2-dev libxdo-dev libssl-dev libsecret-1-dev cmake clang
+# optional, for Wayland text insertion: wtype (wlroots/KDE) or ydotool (GNOME)
+# macOS: Xcode command line tools and `brew install cmake`
+
+cd desktop
+npm install
+npx tauri dev                          # run
+npx tauri build --bundles app,dmg      # macOS app (Linux: --bundles deb,appimage)
+```
+
+- **Repository layout:** `desktop/` is the Tauri 2 app (Rust core for audio, shortcuts, providers,
+  the text pipeline and insertion; React UI). `server/` is OpsTrellis Cloud. `docs/` has the
+  [architecture](docs/ARCHITECTURE.md), [design system](docs/DESIGN.md),
+  [desktop IPC contract](docs/DESKTOP_IPC.md), [testing](docs/TESTING.md),
+  [releasing](docs/RELEASING.md) and the [roadmap](docs/PRODUCT_ROADMAP.md).
+- **Tests:** `cd desktop/src-tauri && cargo test` (86 tests, plus live tests that need a
+  microphone or API keys), `python3 tests/test_installer.py` and `python3 tests/test_release.py`
+  for the installer, and `cd server && npm test` for the server. End-to-end suites with real
+  shortcuts, a virtual microphone and real insertion are described in
+  [docs/TESTING.md](docs/TESTING.md).
+
+## Known limitations
+
+- **Unsigned macOS app:** distributing a signed, notarized build needs an Apple Developer ID; until
+  then macOS may ask for permissions again after each update.
+- **Live cloud providers:** OpenAI, Deepgram, AssemblyAI, Google, Azure, ElevenLabs, Groq,
+  Anthropic and Stripe are implemented against their current APIs and tested on request and
+  response shapes; live tests run when keys are set ([docs/TESTING.md](docs/TESTING.md)).
+- **Wayland:** global shortcuts need the CLI commands above; the pill may take focus on some
+  compositors (it can be turned off in Settings), and some Wayland docks ignore **Show in Dock**.
+- **Not yet:** learning from edits you make inside other apps after insertion, team-shared
+  dictionaries and snippets, Windows and mobile apps. Plans are in
+  [docs/PRODUCT_ROADMAP.md](docs/PRODUCT_ROADMAP.md).
+
+## License
+
+OpsTrellis is **free for personal and other noncommercial use** under the
+[PolyForm Noncommercial License 1.0.0](LICENSE).
+
+**Commercial use requires a paid commercial license**, including using it at or for a company,
+selling or bundling it, hosting the server for others, or using the code in a commercial product.
+See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for what counts as commercial and how to get a
+license.
+
+Third-party libraries and models keep their own licenses. The offline model is
+"S1-mini by Superwhisper" (Apache 2.0).
+
+---
+
+Made by [Mrityunjay](https://github.com/mtr1920). Questions, ideas or bugs:
+[open an issue](https://github.com/mtr1920/opstrellis/issues/new/choose).

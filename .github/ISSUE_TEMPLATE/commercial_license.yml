@@ -1,0 +1,38 @@
+name: Commercial license
+description: Ask for a license to use OpsTrellis commercially
+title: "Commercial license: "
+labels: [commercial-license]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        OpsTrellis is free for personal and other noncommercial use. Use at or for a company, selling or bundling it, hosting the server for others, or using the code in a commercial product needs a commercial license. See [COMMERCIAL-LICENSE.md](https://github.com/mtr1920/opstrellis/blob/main/COMMERCIAL-LICENSE.md).
+
+        This issue is public. Don't include anything confidential; details can follow privately.
+  - type: input
+    id: org
+    attributes:
+      label: Company or organization
+    validations:
+      required: true
+  - type: dropdown
+    id: use
+    attributes:
+      label: How would you use it?
+      multiple: true
+      options:
+        - Desktop app for our team
+        - Self-hosted OpsTrellis Cloud server
+        - Bundled in or resold with a product or service
+        - Parts of the source code in a product
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: seats
+    attributes:
+      label: Approximate number of users
+  - type: textarea
+    id: details
+    attributes:
+      label: Anything else
