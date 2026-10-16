@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # A version tag (v0.2.0, matching Cargo.toml) also publishes a GitHub release for install.sh.
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions: { contents: read }
+
+jobs:
+  server:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-retries 10
+    defaults: { run: { working-directory: server } }
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/opstrellis
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: server/package-lock.json }
+      - run: npm ci
+      - run: npm run fetch-model
+      - run: npm run typecheck
+      - run: npm test
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            bundles: deb,appimage
+            target: linux-x86_64
+          - os: macos-14
+            bundles: app,dmg
+            target: macos-aarch64
+    runs-on: ${{ matrix.os }}
+    defaults: { run: { working-directory: desktop } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer and release regressions (fixture payloads)
+        run: |
+          python3 ../tests/test_installer.py
+          python3 ../tests/test_release.py
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev \
+            libasound2-dev libpulse-dev libxdo-dev libssl-dev libsecret-1-dev patchelf
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: desktop/package-lock.json }
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+          # sherpa-rs-sys downloads its libraries outside target/, and a cached build links
+          # against that folder, so cache it in the same entry.
+          key: sherpa
+          cache-directories: |
+            ~/.cache/sherpa-rs
+            ~/Library/Caches/sherpa-rs
+      - name: Put cached sherpa-onnx libraries back next to the builds (Linux)
+        # sherpa-rs-sys copies its .so files into target/<profile>/, which rust-cache prunes, and a
+        # cached build doesn't rerun that copy. The tests load them from there and the bundle ships them.
+        if: runner.os == 'Linux'
+        run: |
+          for lib in ~/.cache/sherpa-rs/*/*/*/lib; do
+            [ -d "$lib" ] || continue
+            for profile in debug release; do
+              mkdir -p src-tauri/target/$profile
+              for f in "$lib"/*.so*; do
+                [ -e "src-tauri/target/$profile/$(basename "$f")" ] || cp "$f" "src-tauri/target/$profile/"
+              done
+            done
+          done
+      - run: npm ci
+      - run: npm run build
+      - name: Unit tests (with the real local model for the fallback test)
+        run: |
+          mkdir -p /tmp/opstrellis-models && cd /tmp/opstrellis-models
+          curl -sL https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-moonshine-tiny-en-int8.tar.bz2 | tar xj
+          touch sherpa-onnx-moonshine-tiny-en-int8/.complete
+          cd "$GITHUB_WORKSPACE/desktop/src-tauri" && cargo test
+      - name: Bundle
+        run: npx tauri build --bundles ${{ matrix.bundles }}
+      - name: Installer asset (fixed name, as install.sh expects)
+        env: { INSTALLER_TARGET: "${{ matrix.target }}" }
+        run: |
+          # Fail instead of publishing a mislabeled binary if a runner image changes architecture.
+          case "$INSTALLER_TARGET:$(uname -m)" in
+            linux-x86_64:x86_64|macos-aarch64:arm64) ;;
+            *) echo "Unexpected runner architecture"; exit 1 ;;
+          esac
+          mkdir -p release
+          bundle=src-tauri/target/release/bundle
+          if [ "$RUNNER_OS" = Linux ]; then
+            cp $bundle/appimage/*.AppImage release/opstrellis-${{ matrix.target }}.AppImage
+          else
+            # A tarball keeps the app bundle's symlinks and permissions, which the artifact zip drops.
+            tar -czf release/opstrellis-${{ matrix.target }}.app.tar.gz -C $bundle/macos OpsTrellis.app
+          fi
+      - name: Install and rerun the native bundle before publishing
+        env: { APPIMAGE_EXTRACT_AND_RUN: 1 }
+        run: |
+          OPSTRELLIS_TEST_ASSET="$(find "$PWD/release" -type f | head -1)"
+          OPSTRELLIS_TEST_VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)"
+          export OPSTRELLIS_TEST_ASSET OPSTRELLIS_TEST_VERSION
+          python3 ../tests/test_installer.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opstrellis-${{ runner.os }}
+          path: |
+            desktop/release/*
+            desktop/src-tauri/target/release/bundle/deb/*.deb
+            desktop/src-tauri/target/release/bundle/appimage/*.AppImage
+            desktop/src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [server, desktop]
+    runs-on: ubuntu-24.04
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the tag matches the app version
+        run: |
+          version=$(grep -m1 '^version' desktop/src-tauri/Cargo.toml | cut -d'"' -f2)
+          [ "$GITHUB_REF_NAME" = "v$version" ] || { echo "::error::Tag $GITHUB_REF_NAME doesn't match Cargo.toml version $version"; exit 1; }
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts }
+      - name: Publish the release
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          mkdir dist
+          find artifacts -type f \( -name 'opstrellis-*' -o -name '*.deb' -o -name '*.dmg' \) -exec cp {} dist/ \;
+          # Refuse incomplete releases even if an upload/download step lost an asset.
+          test -s dist/opstrellis-linux-x86_64.AppImage
+          test -s dist/opstrellis-macos-aarch64.app.tar.gz
+          test "$(find dist -name '*.deb' | wc -l)" -eq 1
+          test "$(find dist -name '*.dmg' | wc -l)" -eq 1
+          (cd dist && sha256sum -- * > SHA256SUMS && sha256sum --check SHA256SUMS)
+          extra=()
+          case "$GITHUB_REF_NAME" in *-*) extra+=(--prerelease) ;; esac
+          gh release create "$GITHUB_REF_NAME" dist/* --title "OpsTrellis $GITHUB_REF_NAME" --generate-notes --verify-tag "${extra[@]}"
+
+  install-test:
+    # Installs the published release with install.sh on each OS, then reruns it as an update would.
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+    runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      OPSTRELLIS_VERSION: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash install.sh
+      - run: bash install.sh
+      - name: Graphics library every Linux desktop has (AppImages leave it to the system)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libegl1
+      - name: opstrellis --version reports the release
+        # Lets the AppImage run without FUSE, in case the runner lacks it.
+        env: { APPIMAGE_EXTRACT_AND_RUN: 1 }
+        run: test "$(~/.local/bin/opstrellis --version)" = "opstrellis ${GITHUB_REF_NAME#v}"
