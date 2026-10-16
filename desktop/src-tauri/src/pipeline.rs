@@ -696,7 +696,20 @@ impl App {
         } else {
             self.llm_client(settings).complete_within(&system, &llm::wrap_dictation(&pre.text), llm::CLEANUP_TIMEOUT).await
         };
+        // A cleanup (not a rewrite action) must keep every dictionary term that was said, offline
+        // or cloud: the local model can't be told the user's words, so this is how it respects them.
+        let terms: Vec<String> = dictionary.iter().map(|e| e.replacement.clone().unwrap_or_else(|| e.phrase.clone())).collect();
+        let lost = match &request {
+            Ok(out) if rewrite.is_none() => llm::lost_term(&pre.text, out, &terms).map(str::to_string),
+            _ => None,
+        };
         let cleaned = match request {
+            Ok(_) if lost.is_some() => {
+                let term = lost.unwrap_or_default();
+                log::warn!("discarded AI cleanup that changed a dictionary term");
+                warning = Some(format!("AI polish changed “{term}” from your dictionary. Inserted plain text."));
+                pre.text.clone()
+            }
             Ok(out) if llm::accept_cleanup(&pre.text, &out, rewrite.is_some()) => out,
             Ok(out) => {
                 log::warn!("discarded implausible LLM cleanup output ({} chars)", out.len());
