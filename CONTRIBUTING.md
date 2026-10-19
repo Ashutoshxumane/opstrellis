@@ -28,9 +28,6 @@ Development setup is in the [README](README.md#development); architecture notes 
 
 ## License of contributions
 
-OpsTrellis is free for noncommercial use under the [PolyForm Noncommercial License](LICENSE) and is
-also offered under [commercial licenses](COMMERCIAL-LICENSE.md). So that this stays possible, by
-submitting a contribution you confirm that you wrote it (or have the right to submit it), and you
-grant the project author a perpetual, worldwide, royalty-free license to use, modify and
-distribute it under the project's noncommercial license and under commercial licenses. You keep
-the copyright to your contribution.
+OpsTrellis is licensed under the [MIT License](LICENSE). By submitting a contribution you confirm
+that you wrote it (or have the right to submit it) and agree that it is licensed under the same
+MIT License.
