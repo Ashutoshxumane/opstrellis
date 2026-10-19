@@ -43,7 +43,7 @@
   <img src="docs/images/settings.png" width="49%" alt="Settings: shortcuts and general options">
 </p>
 
-Free and open source for everyone, including commercial use ([MIT](#license)).
+Free and open source under the [MIT License](#license).
 If OpsTrellis saves you some typing, a ⭐ helps others find it.
 
 ## Install
@@ -242,11 +242,8 @@ npx tauri build --bundles app,dmg      # macOS app (Linux: --bundles deb,appimag
 
 ## License
 
-OpsTrellis is free and open source under the [MIT License](LICENSE). Anyone can use, copy,
-modify, distribute, host or sell it, for personal or commercial use, with no license fee.
-
-Third-party libraries and models keep their own licenses. The offline model is
-"S1-mini by Superwhisper" (Apache 2.0).
+OpsTrellis is free and open source under the [MIT License](LICENSE). Use it, change it and share it
+however you like.
 
 ---
 

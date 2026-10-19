@@ -261,7 +261,7 @@ function LocalPolish() {
     <div className="span2">
       <div className="row">
         <div className="row-text">
-          <div className="row-title">S1-mini by Superwhisper <span className="meta">· English · {model?.sizeMb ?? 484} MB · Apache 2.0</span></div>
+          <div className="row-title">S1-mini by Superwhisper <span className="meta">· English · {model?.sizeMb ?? 484} MB</span></div>
           <div className="row-desc">
             A small model trained only to clean up dictation: fillers, self-corrections (“at 2, sorry, 3” → “at 3”), grammar and lists.
             Uses about 1 GB of memory while selected. Code editors, terminals and other languages keep the rule-based text;
