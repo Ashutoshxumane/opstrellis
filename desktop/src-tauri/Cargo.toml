@@ -3,7 +3,7 @@ name = "opstrellis"
 version = "0.2.0"
 description = "Voice dictation for every app"
 edition = "2021"
-license = "PolyForm-Noncommercial-1.0.0"
+license = "MIT"
 
 [lib]
 name = "opstrellis_lib"

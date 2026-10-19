@@ -14,7 +14,7 @@
   <a href="https://github.com/mtr1920/opstrellis/actions/workflows/ci.yml"><img src="https://github.com/mtr1920/opstrellis/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/mtr1920/opstrellis/releases"><img src="https://img.shields.io/github/downloads/mtr1920/opstrellis/total?label=downloads" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-blue" alt="macOS | Linux">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-free%20for%20personal%20use-green" alt="Free for personal use"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
   <img src="docs/images/settings.png" width="49%" alt="Settings: shortcuts and general options">
 </p>
 
-Free for personal use; commercial use needs a license (see [License](#license)).
+Free and open source for everyone, including commercial use ([MIT](#license)).
 If OpsTrellis saves you some typing, a ⭐ helps others find it.
 
 ## Install
@@ -187,8 +187,7 @@ docker compose up --build     # Postgres + server on :8787
 
 In the desktop app, open **Settings → Account**, set the server URL and sign in, then add
 "OpsTrellis Cloud" as a transcription or AI provider. Full details:
-[server/README.md](server/README.md). Running the server for customers or as a paid service needs a
-[commercial license](COMMERCIAL-LICENSE.md).
+[server/README.md](server/README.md).
 
 ## Troubleshooting
 
@@ -243,13 +242,8 @@ npx tauri build --bundles app,dmg      # macOS app (Linux: --bundles deb,appimag
 
 ## License
 
-OpsTrellis is **free for personal and other noncommercial use** under the
-[PolyForm Noncommercial License 1.0.0](LICENSE).
-
-**Commercial use requires a paid commercial license**, including using it at or for a company,
-selling or bundling it, hosting the server for others, or using the code in a commercial product.
-See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for what counts as commercial and how to get a
-license.
+OpsTrellis is free and open source under the [MIT License](LICENSE). Anyone can use, copy,
+modify, distribute, host or sell it, for personal or commercial use, with no license fee.
 
 Third-party libraries and models keep their own licenses. The offline model is
 "S1-mini by Superwhisper" (Apache 2.0).
