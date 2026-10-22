@@ -88,6 +88,17 @@ not a full WER evaluation.
 | Whisper Base | 3.1% | 0.133 | 1.5 s |
 | SenseVoice Small | 0.0% | 0.026 | 3.7 s |
 
+Harder audio: 180 clips, 30 each from the Open ASR Leaderboard's AMI, Earnings-22, GigaSpeech,
+LibriSpeech test-other, SPGISpeech and VoxPopuli test sets, on an Apple M3 Pro. The WER here uses the
+benchmark's simple normalizer, so compare rows with each other, not with leaderboard numbers.
+Run it with `OPSTRELLIS_BENCH_CLIPS=<dir with trans.txt and wavs>`.
+
+| Model | WER | Real-time factor | Load |
+|---|---|---|---|
+| Moonshine Tiny | 22.1% | 0.018 | 1.0 s |
+| Parakeet TDT 0.6B v2 | 19.4% | 0.086 | 4.2 s |
+| Parakeet Unified 0.6B | 18.3% | 0.089 | 3.7 s |
+
 ### Measured latency (key release → text in the target app)
 
 Measured with the local Moonshine Tiny model on 4 vCPUs.

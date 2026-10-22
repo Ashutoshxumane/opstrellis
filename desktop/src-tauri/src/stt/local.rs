@@ -32,7 +32,8 @@ const RELEASES: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/
 pub const MODELS: &[ModelInfo] = &[
     ModelInfo { id: "moonshine-tiny-en", name: "Moonshine Tiny", archive: "sherpa-onnx-moonshine-tiny-en-int8", size_mb: 103, languages: "English", description: "Fastest. Good for short English dictation on any CPU.", family: Family::Moonshine },
     ModelInfo { id: "moonshine-base-en", name: "Moonshine Base", archive: "sherpa-onnx-moonshine-base-en-int8", size_mb: 251, languages: "English", description: "More accurate English, still faster than real time on laptops.", family: Family::Moonshine },
-    ModelInfo { id: "parakeet-v2-en", name: "Parakeet TDT 0.6B v2", archive: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8", size_mb: 482, languages: "English", description: "Best English accuracy with punctuation and capitalization.", family: Family::Parakeet },
+    ModelInfo { id: "parakeet-v2-en", name: "Parakeet TDT 0.6B v2", archive: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v2-int8", size_mb: 482, languages: "English", description: "Very accurate English with punctuation and capitalization.", family: Family::Parakeet },
+    ModelInfo { id: "parakeet-unified-en", name: "Parakeet Unified 0.6B", archive: "sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming", size_mb: 501, languages: "English", description: "Newest NVIDIA English model (2026): best English accuracy, with punctuation and capitalization.", family: Family::Parakeet },
     ModelInfo { id: "parakeet-v3", name: "Parakeet TDT 0.6B v3", archive: "sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8", size_mb: 487, languages: "25 European languages", description: "Multilingual European model with automatic language detection.", family: Family::Parakeet },
     ModelInfo { id: "whisper-base", name: "Whisper Base", archive: "sherpa-onnx-whisper-base", size_mb: 208, languages: "99 languages", description: "Multilingual Whisper, small and quick.", family: Family::Whisper("base") },
     ModelInfo { id: "whisper-small", name: "Whisper Small", archive: "sherpa-onnx-whisper-small", size_mb: 639, languages: "99 languages", description: "Multilingual Whisper with better accuracy.", family: Family::Whisper("small") },
@@ -319,7 +320,7 @@ mod bench {
     #[ignore]
     async fn bench_local_models() {
         let dir = PathBuf::from(std::env::var("OPSTRELLIS_TEST_MODELS").unwrap_or_else(|_| "/tmp/opstrellis-models".into()));
-        let clips_dir = model_dir(&dir, info("moonshine-tiny-en").unwrap()).join("test_wavs");
+        let clips_dir = std::env::var("OPSTRELLIS_BENCH_CLIPS").map(PathBuf::from).unwrap_or_else(|_| model_dir(&dir, info("moonshine-tiny-en").unwrap()).join("test_wavs"));
         let refs: Vec<(PathBuf, String)> = std::fs::read_to_string(clips_dir.join("trans.txt"))
             .expect("moonshine-tiny-en with test_wavs required")
             .lines()
@@ -327,7 +328,7 @@ mod bench {
             .filter(|(f, _)| *f != "8k.wav")
             .map(|(f, t)| (clips_dir.join(f), t.to_string()))
             .collect();
-        let ids = ["moonshine-tiny-en", "moonshine-base-en", "parakeet-v2-en", "whisper-base", "sense-voice"];
+        let ids = ["moonshine-tiny-en", "moonshine-base-en", "parakeet-v2-en", "parakeet-unified-en", "whisper-base", "sense-voice"];
         println!("\n| model | WER | real-time factor | load |\n|---|---|---|---|");
         for id in ids {
             let m = info(id).unwrap();
