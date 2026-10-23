@@ -804,7 +804,9 @@ html.overlay-window, html.overlay-window body { background: transparent; }
   .insights-page .page-body > .stat-strip { grid-column: 1 / -1; }
 }
 @media (min-width: 1680px) {
-  .settings-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .settings-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-body > .section > .card { flex: 1; display: flex; flex-direction: column; }
+  .settings-body > .section > .card > .row { flex: 1; }
   .settings-body > :not(#s-voice-input, #s-text-insertion, #s-account, #s-about) { grid-column: 1 / -1; }
 }
 @media (min-width: 1920px) {

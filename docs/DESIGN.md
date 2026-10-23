@@ -126,8 +126,8 @@ Glass falls back to solid surfaces without `backdrop-filter` or when `prefers-re
   - Insights puts Activity and Where you dictate side by side.
   - The toolbar stays 52px at every width, because the native traffic lights can't move.
 - **≥ 1680px:** Settings keeps its reading order top to bottom. Only two short pairs sit side by
-  side: Voice input with Text insertion, and Account with About. Every other section spans the
-  full width.
+  side: Voice input with Text insertion, and Account with About. Paired cards share one height,
+  and their rows spread evenly to fill it. Every other section spans the full width.
 - **≥ 1920px:** the gutter grows to 40px.
 
 ## Motion

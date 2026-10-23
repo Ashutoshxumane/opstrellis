@@ -426,7 +426,7 @@ function Microphone({ settings, set }: SettingsProps) {
   useEffect(() => void api.listInputDevices().then(setDevices, () => {}), []);
   const missing = settings.microphone && !devices.includes(settings.microphone);
   return (
-    <Row title="Microphone">
+    <Row title="Microphone" desc="Used for dictation and meeting notes. System default follows your sound settings.">
       <select value={settings.microphone ?? ""} onChange={(e) => set("microphone", e.target.value || null)}>
         <option value="">System default</option>
         {missing && <option value={settings.microphone!}>{settings.microphone} (not connected)</option>}
@@ -710,7 +710,7 @@ function About() {
 
   return (
     <>
-      <Row title="Version"><span className="meta mono">{version ?? "…"}</span></Row>
+      <Row title="Version" desc="MIT licensed: free for anyone, including commercial use."><span className="meta mono">{version ?? "…"}</span></Row>
       <Row title="Logs" desc={error ?? "Timings and errors for each dictation, without the dictated text."}>
         <button className="btn" onClick={() => api.openLogs().then(() => setError(null), (e) => setError(errMsg(e)))}>Show logs</button>
       </Row>
