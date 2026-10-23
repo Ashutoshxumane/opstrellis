@@ -1,7 +1,7 @@
 // Small shared UI pieces and helpers.
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useEvent, type ModelDownload, type Settings } from "./api";
+import { useEvent, type ModelDownload, type Settings, type Theme } from "./api";
 import { Icon } from "./icons";
 
 export type SetSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => void;
@@ -40,6 +40,25 @@ export function Search({ value, onChange, placeholder = "Search" }: { value: str
 
 /** The webview runs on macOS (the browser preview follows the machine it runs on). */
 export const IS_MAC = /Mac/.test(navigator.userAgent);
+
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+let chosenTheme: Theme = "system";
+const paintTheme = () => {
+  const dark = chosenTheme === "dark" || (chosenTheme === "system" && darkQuery.matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+};
+darkQuery.addEventListener("change", paintTheme);
+
+/** Applies the appearance choice; remembered so the next launch paints the right theme at once. */
+export function applyTheme(theme: Theme | null | undefined) {
+  chosenTheme = theme === "light" || theme === "dark" ? theme : "system";
+  try { localStorage.setItem("theme", chosenTheme); } catch {}
+  paintTheme();
+}
+
+export function initialTheme(): Theme {
+  try { return (localStorage.getItem("theme") as Theme | null) ?? "system"; } catch { return "system"; }
+}
 
 // Shortcuts are stored as accelerators ("Ctrl+Shift+Space", "Super+K", "Fn", "RightOption") and shown with each
 // platform's own key names: ⌃ Control, ⌥ Option, ⇧ Shift, ⌘ Command on macOS; Ctrl, Alt, Shift, Super on Linux.
@@ -129,15 +148,15 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
   );
 }
 
-/** A page: sticky glass header (title left, actions right) over a centred content column. Inside a
+/** A page: one translucent toolbar row (title, tabs, actions) over the content. Inside a
  * page group, the group's title and tabs replace the page's own title. */
 export function Page({ title, actions, children, className }: { title: string; actions?: ReactNode; children?: ReactNode; className?: string }) {
   const group = useContext(PageGroup);
   return (
     <div className={"page" + (className ? " " + className : "")}>
-      <header className="page-head">
-        <div className="page-head-inner">
-          <h1 className="page-title">{group?.title ?? title}</h1>
+      <header className="page-head" data-tauri-drag-region>
+        <div className="page-head-inner" data-tauri-drag-region>
+          <h1 className="page-title" data-tauri-drag-region>{group?.title ?? title}</h1>
           {group?.tabs}
           {actions && <div className="page-actions">{actions}</div>}
         </div>

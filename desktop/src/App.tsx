@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg, useEvent, type DictationState, type Settings } from "./api";
 import { Icon, Logo, type IconName } from "./icons";
-import { comboText, IS_MAC, PageGroup, Tabs, type SetSetting } from "./ui";
+import { applyTheme, comboText, IS_MAC, PageGroup, Tabs, type SetSetting } from "./ui";
 import Home from "./pages/Home";
 import Insights from "./pages/Insights";
 import Dictionary from "./pages/Dictionary";
@@ -85,6 +85,8 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  useEffect(() => { if (settings) applyTheme(settings.theme); }, [settings?.theme]);
+
   useEvent("dictation-state", setDictation);
   useEvent("dictation-error", (msg) => setToast(msg));
   // Changed from the tray: take the backend's copy (edits typed here in the last moment are kept).
@@ -151,7 +153,9 @@ export default function App() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand"><Logo />OpsTrellis</div>
+        <div className="sidebar-top" data-tauri-drag-region>
+          <div className="brand" data-tauri-drag-region><Logo />OpsTrellis</div>
+        </div>
         <nav className="nav">
           {PAGES.map((p, i) => (
             <button key={p.id} className={"nav-item" + (page === p.id ? " active" : "")} onClick={() => setPage(p.id)}

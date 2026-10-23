@@ -175,6 +175,9 @@ fn save_settings(app: State, mut settings: Settings) -> Res<Settings> {
         // Leaving the Dock deactivates the app; keep the window the user is changing it in in front.
         show_main(&app.handle);
     }
+    if old.theme != settings.theme {
+        apply_theme(&app.handle, &settings.theme);
+    }
     if old.privacy.history_retention_days != settings.privacy.history_retention_days {
         apply_retention(&app);
     }
@@ -653,6 +656,20 @@ fn apply_dock(app: &App) {
     }
 }
 
+fn apply_theme(handle: &AppHandle, theme: &str) {
+    let native = match theme {
+        "light" => Some(tauri::Theme::Light),
+        "dark" => Some(tauri::Theme::Dark),
+        _ => None,
+    };
+    for w in handle.webview_windows().values() {
+        if let Err(e) = w.set_theme(native) {
+            log::warn!("setting the window theme failed: {e}");
+        }
+    }
+    let _ = handle.emit("theme-changed", theme);
+}
+
 fn show_main(handle: &AppHandle) {
     if let Some(w) = handle.get_webview_window("main") {
         let _ = w.show();
@@ -767,6 +784,7 @@ pub fn run() {
                 }
             }
             create_overlay(tapp)?;
+            apply_theme(&app.handle, &app.settings().theme);
             apply_retention(&app);
             warm_up(&app);
             sync_polish(&app);

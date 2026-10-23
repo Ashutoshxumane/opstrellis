@@ -42,7 +42,7 @@ export default function SettingsPage(props: Props) {
   const current = useScrollSpy();
 
   return (
-    <Page title="Settings">
+    <Page title="Settings" className="settings-page">
       <div className="settings">
         <nav className="subnav" aria-label="Settings sections">
           {GROUPS.map(([group, sections]) => (
@@ -105,6 +105,14 @@ export default function SettingsPage(props: Props) {
           </SettingsSection>
 
           <SettingsSection title="General">
+            <Row title="Appearance">
+              <div className="segmented" role="radiogroup" aria-label="Appearance">
+                {(["system", "light", "dark"] as const).map((t) => (
+                  <button key={t} role="radio" aria-checked={settings.theme === t} className={settings.theme === t ? "active" : ""}
+                    onClick={() => set("theme", t)}>{t[0].toUpperCase() + t.slice(1)}</button>
+                ))}
+              </div>
+            </Row>
             <Row title="Show recording pill" desc="A small indicator at the bottom of the screen while you talk.">
               <Toggle checked={settings.overlay} onChange={(v) => set("overlay", v)} />
             </Row>

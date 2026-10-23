@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, useEvent, type DictationState, type Outcome } from "./api";
 import { Icon } from "./icons";
+import { applyTheme } from "./ui";
 
 const COLS = 20;
 const ROWS = 5;
@@ -22,8 +23,9 @@ export default function Overlay() {
   const prev = useRef<DictationState>(IDLE);
   useEffect(() => {
     api.permissions().then((p) => setButtons(p.platform !== "macos")).catch(() => {});
-    api.getSettings().then((st) => { sounds.current = st.sounds; }).catch(() => {});
+    api.getSettings().then((st) => { sounds.current = st.sounds; applyTheme(st.theme); }).catch(() => {});
   }, []);
+  useEvent("theme-changed", applyTheme);
 
   useEvent("dictation-state", (s) => {
     const p = prev.current;
