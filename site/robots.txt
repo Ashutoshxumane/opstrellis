@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /og.html
+Sitemap: https://mtr1920.github.io/opstrellis/sitemap.xml
