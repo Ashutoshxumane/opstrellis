@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "app": {
-    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -14,8 +13,16 @@
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "transparent": true,
-        "trafficLightPosition": { "x": 24, "y": 36 },
-        "windowEffects": { "effects": ["sidebar"], "state": "followsWindowActiveState" }
+        "trafficLightPosition": {
+          "x": 24,
+          "y": 36
+        },
+        "windowEffects": {
+          "effects": [
+            "sidebar"
+          ],
+          "state": "followsWindowActiveState"
+        }
       }
     ]
   }
