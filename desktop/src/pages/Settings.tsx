@@ -26,9 +26,9 @@ const LANGUAGES: [string, string][] = [
   ["hi", "Hindi"], ["ja", "Japanese"], ["ko", "Korean"], ["zh", "Chinese"],
 ];
 const GROUPS: [string, string[]][] = [
+  ["App", ["General", "Privacy", "Account", "About"]],
   ["Dictation", ["Shortcuts", "Voice input", "Text insertion", "Permissions"]],
   ["Speech & AI", ["Transcription", "Local models", "AI polish"]],
-  ["App", ["General", "Privacy", "Account", "About"]],
 ];
 const SECTIONS = GROUPS.flatMap(([, sections]) => sections);
 
@@ -56,6 +56,37 @@ export default function SettingsPage(props: Props) {
           ))}
         </nav>
         <div className="settings-body">
+          <SettingsSection title="General">
+            <Row title="Appearance">
+              <div className="segmented" role="radiogroup" aria-label="Appearance">
+                {(["system", "light", "dark"] as const).map((t) => (
+                  <button key={t} role="radio" aria-checked={settings.theme === t} className={settings.theme === t ? "active" : ""}
+                    onClick={() => set("theme", t)}>{t[0].toUpperCase() + t.slice(1)}</button>
+                ))}
+              </div>
+            </Row>
+            <Row title="Show recording pill" desc="A small indicator at the bottom of the screen while you talk.">
+              <Toggle checked={settings.overlay} onChange={(v) => set("overlay", v)} />
+            </Row>
+            <Row title="Sounds" desc="Play a soft sound when recording starts and stops.">
+              <Toggle checked={settings.sounds} onChange={(v) => set("sounds", v)} />
+            </Row>
+            <Row title="Launch at login">
+              <Toggle checked={settings.launchAtLogin} onChange={(v) => set("launchAtLogin", v)} />
+            </Row>
+            <Row title={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"}
+              desc={IS_MAC
+                ? "Off: OpsTrellis stays in the menu bar only and keeps running in the background. Open it from the menu bar icon."
+                : "Off: OpsTrellis stays in the system tray only and keeps running in the background. Some Wayland desktops still show it in the dock."}>
+              <Toggle checked={settings.showInDock} onChange={(v) => set("showInDock", v)} label={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"} />
+            </Row>
+          </SettingsSection>
+
+          <SettingsSection title="Privacy"><Privacy {...props} /></SettingsSection>
+          <SettingsSection title="Account"><Account {...props} /></SettingsSection>
+
+          <SettingsSection title="About"><About /></SettingsSection>
+
           <SettingsSection title="Shortcuts">
             <Shortcuts {...props} />
             {props.saveError && <div className="error">{props.saveError}</div>}
@@ -104,36 +135,6 @@ export default function SettingsPage(props: Props) {
             <LlmSection settings={settings} set={set} saveNow={props.saveNow} />
           </SettingsSection>
 
-          <SettingsSection title="General">
-            <Row title="Appearance">
-              <div className="segmented" role="radiogroup" aria-label="Appearance">
-                {(["system", "light", "dark"] as const).map((t) => (
-                  <button key={t} role="radio" aria-checked={settings.theme === t} className={settings.theme === t ? "active" : ""}
-                    onClick={() => set("theme", t)}>{t[0].toUpperCase() + t.slice(1)}</button>
-                ))}
-              </div>
-            </Row>
-            <Row title="Show recording pill" desc="A small indicator at the bottom of the screen while you talk.">
-              <Toggle checked={settings.overlay} onChange={(v) => set("overlay", v)} />
-            </Row>
-            <Row title="Sounds" desc="Play a soft sound when recording starts and stops.">
-              <Toggle checked={settings.sounds} onChange={(v) => set("sounds", v)} />
-            </Row>
-            <Row title="Launch at login">
-              <Toggle checked={settings.launchAtLogin} onChange={(v) => set("launchAtLogin", v)} />
-            </Row>
-            <Row title={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"}
-              desc={IS_MAC
-                ? "Off: OpsTrellis stays in the menu bar only and keeps running in the background. Open it from the menu bar icon."
-                : "Off: OpsTrellis stays in the system tray only and keeps running in the background. Some Wayland desktops still show it in the dock."}>
-              <Toggle checked={settings.showInDock} onChange={(v) => set("showInDock", v)} label={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"} />
-            </Row>
-          </SettingsSection>
-
-          <SettingsSection title="Privacy"><Privacy {...props} /></SettingsSection>
-          <SettingsSection title="Account"><Account {...props} /></SettingsSection>
-
-          <SettingsSection title="About"><About /></SettingsSection>
         </div>
       </div>
     </Page>

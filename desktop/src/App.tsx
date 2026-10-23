@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg, useEvent, type DictationState, type Settings } from "./api";
 import { Icon, Logo, type IconName } from "./icons";
-import { applyTheme, comboText, IS_MAC, PageGroup, Tabs, type SetSetting } from "./ui";
+import { applyTheme, comboText, IS_MAC, isDarkTheme, PageGroup, Tabs, type SetSetting } from "./ui";
 import Home from "./pages/Home";
 import Insights from "./pages/Insights";
 import Dictionary from "./pages/Dictionary";
@@ -147,6 +147,7 @@ export default function App() {
   if (!settings) return <div className="center-msg">Loading…</div>;
 
   const props = { settings, set };
+  const dark = isDarkTheme(settings.theme);
   const statusLabel = dictation.status === "recording" ? (!dictation.micReady ? "Opening mic…" : dictation.mode === "command" ? "Command…" : "Listening…")
     : dictation.status === "processing" ? (dictation.stage === "polishing" ? "Polishing…" : "Transcribing…") : "Ready";
 
@@ -166,11 +167,17 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-foot">
-          <button className={"nav-item" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}
-            title={`Settings (${comboText(`${MOD}+Comma`)})`}
-            aria-current={page === "settings" ? "page" : undefined}>
-            <Icon name="settings" />Settings
-          </button>
+          <div className="foot-row">
+            <button className={"nav-item" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}
+              title={`Settings (${comboText(`${MOD}+Comma`)})`}
+              aria-current={page === "settings" ? "page" : undefined}>
+              <Icon name="settings" />Settings
+            </button>
+            <button className="icon-btn" onClick={() => set("theme", dark ? "light" : "dark")}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
+              <Icon name={dark ? "sun" : "moon"} />
+            </button>
+          </div>
           <button className={"status " + dictation.status}
             title={dictation.status === "idle" ? "Start dictation" : "Stop dictation"}
             onClick={() => (dictation.status === "idle" ? api.startDictation() : api.stopDictation()).catch((e) => setToast(errMsg(e)))}>

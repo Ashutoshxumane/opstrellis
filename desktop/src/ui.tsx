@@ -1,6 +1,7 @@
 // Small shared UI pieces and helpers.
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEvent, type ModelDownload, type Settings, type Theme } from "./api";
 import { Icon } from "./icons";
 
@@ -44,17 +45,26 @@ export const IS_MAC = /Mac/.test(navigator.userAgent);
 const darkQuery = matchMedia("(prefers-color-scheme: dark)");
 let chosenTheme: Theme = "system";
 const paintTheme = () => {
-  const dark = chosenTheme === "dark" || (chosenTheme === "system" && darkQuery.matches);
-  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  const root = document.documentElement;
+  const theme = chosenTheme === "dark" || (chosenTheme === "system" && darkQuery.matches) ? "dark" : "light";
+  if (root.dataset.theme === theme) return;
+  root.classList.add("theme-switching");
+  root.dataset.theme = theme;
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
 };
 darkQuery.addEventListener("change", paintTheme);
 
 /** Applies the appearance choice; remembered so the next launch paints the right theme at once. */
 export function applyTheme(theme: Theme | null | undefined) {
-  chosenTheme = theme === "light" || theme === "dark" ? theme : "system";
+  const next = theme === "light" || theme === "dark" ? theme : "system";
+  const changed = next !== chosenTheme;
+  chosenTheme = next;
   try { localStorage.setItem("theme", chosenTheme); } catch {}
   paintTheme();
+  if (changed && "__TAURI_INTERNALS__" in window) getCurrentWindow().setTheme(next === "system" ? null : next).catch(() => {});
 }
+
+export const isDarkTheme = (t: Theme) => t === "dark" || (t !== "light" && darkQuery.matches);
 
 export function initialTheme(): Theme {
   try { return (localStorage.getItem("theme") as Theme | null) ?? "system"; } catch { return "system"; }

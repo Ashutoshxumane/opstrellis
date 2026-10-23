@@ -12,9 +12,9 @@
   --panel-edge: rgba(255, 255, 255, 0.75);
   --panel-line: rgba(0, 0, 0, 0.06);
   --panel-shadow: 0 8px 28px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --pane-glass: rgba(248, 248, 250, 0.62);
-  --card-glass: rgba(255, 255, 255, 0.7);
-  --toolbar-glass: rgba(248, 248, 250, 0.56);
+  --pane-glass: rgba(246, 246, 248, 0.84);
+  --card-glass: rgba(255, 255, 255, 0.88);
+  --toolbar-glass: rgba(246, 246, 248, 0.72);
   --hover: rgba(0, 0, 0, 0.05);
   --selected: rgba(59, 91, 219, 0.12);
   --text: #1d1d1f;
@@ -69,9 +69,9 @@
   --panel-edge: rgba(255, 255, 255, 0.12);
   --panel-line: rgba(0, 0, 0, 0.4);
   --panel-shadow: 0 8px 28px rgba(0, 0, 0, 0.36), 0 1px 2px rgba(0, 0, 0, 0.3);
-  --pane-glass: rgba(28, 28, 30, 0.64);
-  --card-glass: rgba(58, 58, 62, 0.46);
-  --toolbar-glass: rgba(28, 28, 30, 0.5);
+  --pane-glass: rgba(28, 28, 30, 0.78);
+  --card-glass: rgba(52, 52, 56, 0.6);
+  --toolbar-glass: rgba(28, 28, 30, 0.66);
   --hover: rgba(255, 255, 255, 0.06);
   --selected: rgba(120, 146, 255, 0.2);
   --text: #f2f2f4;
@@ -143,14 +143,13 @@ button:disabled { cursor: default; }
 }
 
 /* ============================== Shell ============================== */
-.app { display: flex; height: 100vh; }
+.app { display: flex; gap: 8px; height: 100vh; padding: 8px; }
 
 .sidebar {
   flex: none;
   width: 220px;
   display: flex;
   flex-direction: column;
-  margin: 8px 0 8px 8px;
   padding: 0 8px 8px;
   border-radius: 16px;
   background: var(--panel);
@@ -158,7 +157,7 @@ button:disabled { cursor: default; }
   backdrop-filter: saturate(180%) blur(30px);
   box-shadow: inset 0 0 0 1px var(--panel-edge), 0 0 0 1px var(--panel-line), var(--panel-shadow);
 }
-.sidebar-top { flex: none; display: flex; align-items: center; height: 36px; margin-bottom: 8px; padding: 0 8px; }
+.sidebar-top { flex: none; display: flex; align-items: center; height: var(--toolbar-h); padding: 0 8px; }
 .brand { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 650; letter-spacing: -0.01em; }
 .brand-mark { flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--accent); }
 .nav { display: flex; flex-direction: column; gap: 2px; }
@@ -180,6 +179,8 @@ button:disabled { cursor: default; }
 .nav-item.active { background: var(--selected); }
 .nav-item.active .icon { color: var(--accent-text); }
 .sidebar-foot { display: flex; flex-direction: column; gap: 2px; margin-top: auto; }
+.foot-row { display: flex; align-items: center; gap: 2px; }
+.foot-row .nav-item { flex: 1; min-width: 0; }
 
 .status {
   display: flex;
@@ -205,20 +206,15 @@ button:disabled { cursor: default; }
 .status kbd { display: block; min-width: 0; padding: 0 4px; overflow: hidden; text-overflow: ellipsis; line-height: 18px; background: transparent; }
 .status .icon { color: var(--muted); }
 
-.content { flex: 1; min-width: 0; height: 100vh; margin-left: 8px; background: var(--bg); box-shadow: -1px 0 0 var(--panel-line); }
+.content { flex: 1; min-width: 0; overflow: hidden; border-radius: 16px; background: var(--bg); box-shadow: 0 0 0 1px var(--panel-line), var(--panel-shadow); }
 .panel { height: 100%; overflow-y: auto; overflow-x: hidden; }
 
-/* macOS app window: native vibrancy shows through the floating sidebar, the content pane and its frosted cards. */
+/* macOS app window: native vibrancy shows in the gaps and through both floating panels and the frosted cards. */
 html.mac-window, html.mac-window body, html.mac-window .app { background: transparent; }
 html.mac-window .brand { display: none; }
-html.mac-window .content { background: var(--pane-glass); }
+html.mac-window .content { background: var(--pane-glass); box-shadow: inset 0 0 0 1px var(--panel-edge), 0 0 0 1px var(--panel-line), var(--panel-shadow); }
 html.mac-window .page-head { background: var(--toolbar-glass); }
-html.mac-window .card:not(.tone-card.selected) {
-  background: var(--card-glass);
-  -webkit-backdrop-filter: saturate(160%) blur(24px);
-  backdrop-filter: saturate(160%) blur(24px);
-  box-shadow: inset 0 1px 0 var(--panel-edge);
-}
+html.mac-window .card:not(.tone-card.selected) { background: var(--card-glass); box-shadow: inset 0 1px 0 var(--panel-edge); }
 
 /* ============================== Page ============================== */
 .page-head {
@@ -563,8 +559,8 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: calc(100vh - var(--toolbar-h));
-  padding: 16px;
+  height: calc(100vh - 16px - var(--toolbar-h));
+  padding: 16px 16px 16px calc(var(--gutter) - 8px);
   overflow-y: auto;
   border-right: 1px solid var(--line);
 }
@@ -656,7 +652,7 @@ kbd {
 .notes {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  height: calc(100vh - var(--toolbar-h) - 52px);
+  height: calc(100vh - 16px - var(--toolbar-h) - 52px);
   min-height: 400px;
   overflow: hidden;
 }
@@ -789,6 +785,32 @@ html.overlay-window, html.overlay-window body { background: transparent; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes enter { from { opacity: 0; transform: translateY(4px); } }
 @keyframes sweep { 0% { opacity: 0.85; } 12% { opacity: 0.18; } }
+/* ============================== Large screens ============================== */
+@media (min-width: 1440px) {
+  :root { --gutter: 32px; }
+  body { font-size: 14px; }
+  .page-title { font-size: 18px; line-height: 24px; }
+  .section-title { font-size: 15px; }
+  .page-body, .settings-body { gap: 28px; padding-top: 24px; }
+  .settings-page .page-body { padding-top: 0; }
+  .row, .list-row, .hint, .empty { padding: 14px 20px; }
+  .stat { padding: 20px; }
+  .stat-value { font-size: 32px; line-height: 40px; }
+  .form-grid, .provider, .bars, .activity, .meeting-live { padding: 20px; }
+  .provider .form-grid { padding: 0; }
+  .settings { grid-template-columns: 220px minmax(0, 1fr); }
+  .insights-page .page-body { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .insights-page .page-body > .stat-strip { grid-column: 1 / -1; }
+}
+@media (min-width: 1680px) {
+  .settings-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .settings-body > :is(#s-shortcuts, #s-permissions, #s-transcription, #s-local-models, #s-ai-polish, .error) { grid-column: 1 / -1; }
+}
+@media (min-width: 1920px) {
+  :root { --gutter: 40px; }
+  .tone-grid { gap: 16px; }
+}
+.theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

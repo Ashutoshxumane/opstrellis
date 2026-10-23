@@ -19,8 +19,10 @@ and no way to pick a theme.
    - The sidebar is a floating glass panel in the spirit of macOS Tahoe: inset 8px, radius 16, a
      translucent `--panel` tint with backdrop blur, a bright 1px `--panel-edge` and a soft
      `--panel-shadow`. The traffic lights sit inside it.
-   - The content pane is opaque `--bg`, so text stays crisp.
-   - Linux keeps a normal decorated window. The panel floats over a solid `--window` colour there.
+   - The content is a second floating panel: radius 16, inset 8px from the top, right and bottom,
+     and 8px from the sidebar. Every gap around and between the two panels is 8px. On macOS its fill
+     is the translucent `--pane-glass`, and its cards are frosted `--card-glass`.
+   - Linux keeps a normal decorated window. The panels float over a solid `--window` colour there.
 4. **One toolbar row.** Each page has a single 52px sticky toolbar.
    - It holds the title (left), tabs, and actions (right). The title is level with the sidebar's top
      strip, and the first nav item starts at the toolbar's bottom edge.
@@ -34,12 +36,16 @@ and no way to pick a theme.
 
 ## Themes
 
-Appearance is a setting (Settings → General → Appearance: System, Light or Dark). It is stored as
+Appearance is a setting: Settings → General → Appearance (System, Light or Dark), which is the first
+row Settings shows. A sun/moon button beside Settings in the sidebar flips light ↔ dark from anywhere. It is stored as
 `theme` in the Rust settings, with "system" as the default.
 - The frontend sets `data-theme="light|dark"` on `<html>`; "system" follows `prefers-color-scheme`.
   It is also kept in `localStorage`, so the next launch paints the right theme before settings load.
-- The backend calls `set_theme` on every window, so the native vibrancy and traffic lights match. It
-  emits `theme-changed` so the overlay pill follows.
+- The switch is instant. The page calls the window's `setTheme` itself, so the native vibrancy changes
+  in the same frame, without waiting for the settings save. Transitions are suspended for that one
+  frame, so every surface changes at once.
+- On save, the backend also calls `set_theme` on every window and emits `theme-changed`, so the
+  overlay pill follows.
 
 ## Tokens
 
@@ -88,7 +94,7 @@ Glass falls back to solid surfaces without `backdrop-filter` or when `prefers-re
 ## Layout and controls
 
 - **Sidebar.** A 220px floating panel, padding 0 8px 8px.
-  - The top strip is 36px and a window drag region, centred on the toolbar title. On macOS it holds
+  - The top strip is 52px, the toolbar's height, and a window drag region centred on the toolbar title. On macOS it holds
     the traffic lights; on Linux it holds the logo and name.
   - Nav items are 28px tall with a 2px gap, radius 6, 16px icons in `--text-2` with an 8px gap.
   - The selected item has a `--selected` tinted fill, with its icon in `--accent-text`.
@@ -109,6 +115,18 @@ Glass falls back to solid surfaces without `backdrop-filter` or when `prefers-re
   - Kbd caps are 20px tall.
 - **Lists** (history, dictionary, snippets, actions, apps) highlight the hovered row with `--hover`.
   History row actions float in a small solid toolbar at the row's top right on hover or focus.
+
+## Large screens
+
+- **≥ 1440px:**
+  - The gutter grows to 32px and body text to 14px. The toolbar title is 18px and section headings
+    are 15px.
+  - Rows, cards and stats get 20px padding, and stat values are 32px.
+  - Insights puts Activity and Where you dictate side by side.
+  - The toolbar stays 52px at every width, because the native traffic lights can't move.
+- **≥ 1680px:** Settings lays its cards out in two columns. Shortcuts, Permissions, Transcription,
+  Local models and AI polish span both columns.
+- **≥ 1920px:** the gutter grows to 40px.
 
 ## Motion
 
@@ -133,9 +151,9 @@ Smooth, never showy. Everything uses `--ease`; nothing bounces.
   - A 200px section nav sits flush with the content pane's left edge, separated by a hairline. It is sticky, and its
     labels align with the toolbar title. Below 1060px it is hidden and the cards take the full width.
   - Groups:
+    - App (shown first): General (Appearance first), Privacy, Account, About
     - Dictation: Shortcuts, Voice input, Text insertion, Permissions
     - Speech & AI: Transcription, Local models, AI polish
-    - App: General (Appearance first), Privacy, Account, About
 - **Keyboard.**
   - ⌘1–⌘5 (Ctrl on Linux) open the sidebar pages, ⌘, opens Settings, and ⌘F focuses the page's search.
     They match physical keys, so they work on any layout, and they do nothing while a dialog is open.

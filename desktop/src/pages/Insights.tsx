@@ -22,7 +22,7 @@ export default function Insights() {
   const days = (n: number) => `${n} ${n === 1 ? "day" : "days"}`;
 
   return (
-    <Page title="Insights">
+    <Page title="Insights" className="insights-page">
       <div className="card stat-strip">
         <Stat label="Words per minute" value={Math.round(stats.wpm)} />
         <Stat label="Total words" value={fmtNum(stats.totalWords)} />

@@ -5,9 +5,10 @@
 //
 // Writes screenshots to $OUT (default /tmp/design) and exits non-zero when a check fails.
 //
-// Rules (DESIGN.md "Native"): a 52px toolbar row whose title is level with the floating sidebar's top strip
-// (where the macOS traffic lights sit); the first nav item starts at the toolbar's bottom edge; content
-// fills the window edge to edge, left-aligned with the toolbar title; controls are 28px; a 2px grid.
+// Rules (DESIGN.md "Native"): two floating panels (sidebar, content) with equal 8px gaps on every side; a
+// 52px toolbar whose title is level with the sidebar's top strip (where the macOS traffic lights sit); the
+// first nav item starts at the toolbar's bottom edge; content fills its panel, left-aligned with the title;
+// controls are 28px; a 2px grid.
 import { execSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -19,7 +20,7 @@ const { chromium } = createRequire(path.join(PW_DIR, "package.json"))("playwrigh
 const BASE = process.env.BASE_URL ?? "http://localhost:1430/";
 const OUT = process.env.OUT ?? "/tmp/design";
 const CHROME = process.env.CHROME ?? "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell";
-const WIDTHS = [820, 1100, 1800];
+const WIDTHS = [820, 1100, 1440, 1800, 2200];
 const PAGES = ["home", "notes", "notes&tab=meetings", "library", "library&tab=snippets", "library&tab=actions", "style", "insights", "settings"];
 const SCHEMES = ["light", "dark"];
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -66,8 +67,10 @@ function measure() {
     ...body.querySelectorAll(":scope > .section > .day > .card"),
   ].filter(visible);
   const settingsNav = body.querySelector(".subnav");
+  const twoColumn = getComputedStyle(body).display === "grid";
   for (const el of top) {
     if (el.matches(".settings")) continue;
+    if (twoColumn && el.getBoundingClientRect().left > tr.left + 1) continue;
     const l = el.getBoundingClientRect().left;
     if (Math.abs(l - tr.left) > 1) out.align.push(`${name(el)} left ${l.toFixed(1)} ≠ title ${tr.left.toFixed(1)}`);
   }
@@ -81,10 +84,12 @@ function measure() {
   }
   const sb = body.querySelector(".settings-body");
   if (sb) {
-    const edge = sb.getBoundingClientRect().left;
-    for (const el of sb.querySelectorAll(":scope > .section > *")) {
-      const l = el.getBoundingClientRect().left;
-      if (visible(el) && Math.abs(l - edge) > 1) out.align.push(`settings ${name(el)} left ${l.toFixed(1)} ≠ ${edge.toFixed(1)}`);
+    for (const sec of sb.querySelectorAll(":scope > .section")) {
+      const edge = sec.getBoundingClientRect().left;
+      for (const el of sec.children) {
+        const l = el.getBoundingClientRect().left;
+        if (visible(el) && Math.abs(l - edge) > 1) out.align.push(`settings ${name(el)} left ${l.toFixed(1)} ≠ ${edge.toFixed(1)}`);
+      }
     }
   }
 
@@ -93,8 +98,11 @@ function measure() {
   const sidebar = document.querySelector(".sidebar").getBoundingClientRect();
   const strip = document.querySelector(".sidebar-top").getBoundingClientRect();
   const nav = document.querySelector(".nav .nav-item").getBoundingClientRect();
-  if (Math.abs(hr.top) > 1) out.header.push(`header top ${hr.top} ≠ 0`);
-  if (Math.abs(sidebar.top - 8) > 1 || Math.abs(sidebar.left - 8) > 1) out.header.push(`sidebar panel not inset 8px (${sidebar.left}, ${sidebar.top})`);
+  const pane = document.querySelector(".content").getBoundingClientRect();
+  if (Math.abs(sidebar.top - 8) > 1 || Math.abs(sidebar.left - 8) > 1 || Math.abs(innerHeight - sidebar.bottom - 8) > 1) out.header.push(`sidebar panel not inset 8px`);
+  if (Math.abs(pane.top - 8) > 1 || Math.abs(innerWidth - pane.right - 8) > 1 || Math.abs(innerHeight - pane.bottom - 8) > 1) out.header.push(`content panel not inset 8px (${pane.top}, ${innerWidth - pane.right}, ${innerHeight - pane.bottom})`);
+  if (Math.abs(pane.left - sidebar.right - 8) > 1) out.header.push(`gap between panels ${pane.left - sidebar.right} ≠ 8`);
+  if (Math.abs(hr.top - pane.top) > 1) out.header.push(`toolbar top ${hr.top} ≠ content panel top ${pane.top}`);
   if (Math.abs(hr.height - 52) > 1) out.header.push(`header height ${hr.height} ≠ 52`);
   const tc = tr.top + tr.height / 2;
   if (Math.abs(strip.top + strip.height / 2 - tc) > 1) out.header.push(`sidebar strip centre ≠ title centre ${tc}`);
