@@ -273,7 +273,7 @@ pub fn set(app: &Arc<App>, binding: Option<(Key, Mode)>) -> bool {
     *lock(&MACHINE) = Machine::new();
     let fn_bound = matches!(binding, Some((Key::Fn, _)));
     on_main_thread(app, move || if fn_bound { globe::hold() } else { globe::release() });
-    binding.is_none() || tap::start(true)
+    binding.is_none() || (tap::start(true) && permission_granted())
 }
 
 /// Whether Fn itself is the single-key shortcut.
@@ -281,9 +281,9 @@ pub fn fn_bound() -> bool {
     matches!(*lock(&BINDING), Some((Key::Fn, _)))
 }
 
-/// Whether a single-key shortcut is set and its key events are being received (None: none set).
+/// Whether a single-key shortcut is set and works in every app (None: none set).
 pub fn active() -> Option<bool> {
-    lock(&BINDING).map(|_| tap::running())
+    lock(&BINDING).map(|_| tap::running() && permission_granted())
 }
 
 /// While the shortcut recorder is open: single-key shortcuts don't dictate, and a key pressed on
@@ -308,10 +308,11 @@ pub fn release_system_action() {
     globe::release();
 }
 
-/// Whether OpsTrellis may watch keys: Input Monitoring granted, or the tap already running (it
-/// can lag a fresh grant by a second, and Accessibility also allows it).
+/// Whether macOS grants Input Monitoring to this build. A running tap doesn't prove it: with a
+/// grant left over from an earlier (differently signed) build the tap starts but only sees keys
+/// while OpsTrellis is frontmost, and Accessibility being trusted doesn't change that.
 pub fn permission_granted() -> bool {
-    tap::running() || tap::preflight()
+    tap::preflight()
 }
 
 /// Called from the event tap thread, in event order.
@@ -670,6 +671,7 @@ mod tap {
         }
         let port = create();
         let ok = !port.is_null();
+        log::info!("key tap {}; Input Monitoring granted: {}", if ok { "created" } else { "not created yet" }, preflight());
         if !ok {
             ask();
         }
@@ -723,7 +725,8 @@ mod tap {
             // macOS switches a tap off if it is slow or on some secure input; switch it back on.
             DISABLED_BY_TIMEOUT | DISABLED_BY_USER_INPUT => {
                 unsafe { CGEventTapEnable(PORT.load(Ordering::SeqCst), true) };
-                log::warn!("key tap was disabled, re-enabled");
+                let why = if kind == DISABLED_BY_TIMEOUT { "timeout" } else { "user input" };
+                log::warn!("key tap was disabled ({why}), re-enabled");
                 // A release may have been missed meanwhile; don't stay stuck "held".
                 let Some((key, _)) = *super::lock(&super::BINDING) else { return event };
                 if unsafe { CGEventSourceFlagsState(HID_SYSTEM_STATE) } & key.down_flag() != 0 {
