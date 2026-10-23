@@ -105,7 +105,7 @@ export default function Notetaker({ settings }: { settings: Settings }) {
       {error && <div className="error">{error}</div>}
 
       <div className="card">
-        <Row title="Notes format" desc={settings.llm.enabled ? "The AI summary follows this template." : "Templates need AI polish (Settings → AI)."}>
+        <Row title="Notes format" desc={settings.llm.enabled ? "The AI summary follows this template." : "Templates need AI polish (Settings → AI polish)."}>
           <select value={template} onChange={(e) => setTemplate(e.target.value)} disabled={active || !settings.llm.enabled} aria-label="Notes format">
             {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
@@ -122,7 +122,7 @@ export default function Notetaker({ settings }: { settings: Settings }) {
         {meetings.length === 0 ? (
           <Empty>
             No meetings yet. Recordings are transcribed as they run and saved here
-            {settings.llm.enabled ? " with a summary and action items." : ". Turn on AI polish in Settings → AI for summaries."}
+            {settings.llm.enabled ? " with a summary and action items." : ". Turn on AI polish in Settings → AI polish for summaries."}
           </Empty>
         ) : (
           <div className="card list">

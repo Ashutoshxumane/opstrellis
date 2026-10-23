@@ -73,10 +73,11 @@ export default function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.altKey || e.shiftKey || (IS_MAC ? !e.metaKey || e.ctrlKey : !e.ctrlKey || e.metaKey)) return;
-      const n = Number(e.key);
+      if (document.querySelector("[role=dialog]")) return;
+      const n = Number(/^Digit(\d)$/.exec(e.code)?.[1]);
       if (n >= 1 && n <= PAGES.length) setPage(PAGES[n - 1].id);
-      else if (e.key === ",") setPage("settings");
-      else if (e.key.toLowerCase() === "f") document.querySelector<HTMLInputElement>(".panel .search input")?.focus();
+      else if (e.code === "Comma") setPage("settings");
+      else if (e.code === "KeyF") document.querySelector<HTMLInputElement>(".panel .search input")?.focus();
       else return;
       e.preventDefault();
     };

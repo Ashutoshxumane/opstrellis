@@ -1,5 +1,5 @@
 // Small shared UI pieces and helpers.
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useEvent, type ModelDownload, type Settings } from "./api";
 import { Icon } from "./icons";
@@ -93,6 +93,13 @@ export function Keys({ combo }: { combo: string }) {
 export function Modal({ title, onClose, children, footer, className }: {
   title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; className?: string;
 }) {
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) close.current(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={"modal" + (className ? " " + className : "")} role="dialog" aria-label={typeof title === "string" ? title : undefined}>

@@ -248,7 +248,7 @@ async fn repolish_history(app: State<'_>, id: i64) -> Res<String> {
     }
     let settings = app.settings();
     if !settings.llm.enabled {
-        return Err("Turn on AI polish in Settings → AI first".into());
+        return Err("Turn on AI polish in Settings → AI polish first".into());
     }
     let ctx = context::from_history(item.app_name.clone(), &item.category, &settings.app_categories);
     let cleaned = app.clean_up(&item.raw_text, &ctx, &settings, &app.vocabulary()).await.map_err(|e| format!("{e:#}"))?;

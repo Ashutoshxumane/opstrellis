@@ -108,7 +108,7 @@ export default function Style({ settings, set }: SettingsProps) {
 
       <Section title="AI polish">
         <div className="card">
-          <Row title="Polish with AI" desc={<>Fix grammar, self-corrections and lists, and apply the style above. Provider, model and key are in Settings → AI.</>}>
+          <Row title="Polish with AI" desc={<>Fix grammar, self-corrections and lists, and apply the style above. Provider, model and key are in Settings → AI polish.</>}>
             <Toggle checked={settings.llm.enabled} onChange={(v) => set("llm", { ...settings.llm, enabled: v })} label="AI polish" />
           </Row>
         </div>

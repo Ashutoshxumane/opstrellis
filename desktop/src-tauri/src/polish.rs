@@ -154,11 +154,11 @@ fn loaded<'a>(slot: &'a mut Option<LlamaModel>, models_dir: &Path) -> Result<&'a
     if slot.is_none() {
         let file = path(models_dir);
         if !file.is_file() {
-            bail!("{NAME} isn't downloaded yet (Settings → AI)");
+            bail!("{NAME} isn't downloaded yet (Settings → AI polish)");
         }
         let backend = BACKEND.as_ref().ok_or_else(|| anyhow!("the local AI engine couldn't start"))?;
         let model = LlamaModel::load_from_file(backend, &file, &LlamaModelParams::default())
-            .map_err(|e| anyhow!("{NAME} couldn't be loaded ({e}); delete it and download it again in Settings → AI"))?;
+            .map_err(|e| anyhow!("{NAME} couldn't be loaded ({e}); delete it and download it again in Settings → AI polish"))?;
         *slot = Some(model);
     }
     Ok(slot.as_ref().unwrap())
