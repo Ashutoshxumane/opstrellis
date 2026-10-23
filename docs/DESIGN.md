@@ -125,8 +125,9 @@ Glass falls back to solid surfaces without `backdrop-filter` or when `prefers-re
   - Rows, cards and stats get 20px padding, and stat values are 32px.
   - Insights puts Activity and Where you dictate side by side.
   - The toolbar stays 52px at every width, because the native traffic lights can't move.
-- **≥ 1680px:** Settings lays its cards out in two columns. Shortcuts, Permissions, Transcription,
-  Local models and AI polish span both columns.
+- **≥ 1680px:** Settings keeps its reading order top to bottom. Only two short pairs sit side by
+  side: Voice input with Text insertion, and Account with About. Every other section spans the
+  full width.
 - **≥ 1920px:** the gutter grows to 40px.
 
 ## Motion
@@ -152,9 +153,10 @@ Smooth, never showy. Everything uses `--ease`; nothing bounces.
   - A 200px section nav sits flush with the content pane's left edge, separated by a hairline. It is sticky, and its
     labels align with the toolbar title. Below 1060px it is hidden and the cards take the full width.
   - Groups:
-    - App (shown first): General (Appearance first), Privacy, Account, About
+    - App: General (Appearance first)
     - Dictation: Shortcuts, Voice input, Text insertion, Permissions
     - Speech & AI: Transcription, Local models, AI polish
+    - Account & privacy: Privacy, Account, About (with Logs)
 - **Keyboard.**
   - ⌘1–⌘5 (Ctrl on Linux) open the sidebar pages, ⌘, opens Settings, and ⌘F focuses the page's search.
     They match physical keys, so they work on any layout, and they do nothing while a dialog is open.

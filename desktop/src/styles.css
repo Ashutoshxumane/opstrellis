@@ -551,7 +551,7 @@ kbd {
 .tone-example { margin-top: 8px; color: var(--text-2); white-space: pre-line; }
 
 /* ============================== Settings ============================== */
-.settings-page .page-body { padding-top: 0; padding-left: 0; }
+.settings-page .page-body { padding-top: 0; padding-bottom: 0; padding-left: 0; }
 .settings { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: var(--gutter); align-items: start; }
 .subnav {
   position: sticky;
@@ -578,7 +578,7 @@ kbd {
 }
 .subnav button:hover { background: var(--hover); color: var(--text); }
 .subnav button.active { background: var(--selected); color: var(--text); font-weight: 500; }
-.settings-body { display: flex; flex-direction: column; gap: 24px; min-width: 0; padding-top: 20px; }
+.settings-body { display: flex; flex-direction: column; gap: 24px; min-width: 0; padding-top: 20px; padding-bottom: 32px; }
 .settings-body .section { scroll-margin-top: calc(var(--toolbar-h) + 20px); }
 .settings-body > .error { padding: 0 16px 12px; }
 @media (max-width: 1060px) {
@@ -793,6 +793,7 @@ html.overlay-window, html.overlay-window body { background: transparent; }
   .section-title { font-size: 15px; }
   .page-body, .settings-body { gap: 28px; padding-top: 24px; }
   .settings-page .page-body { padding-top: 0; }
+  .settings-body { padding-bottom: 40px; }
   .row, .list-row, .hint, .empty { padding: 14px 20px; }
   .stat { padding: 20px; }
   .stat-value { font-size: 32px; line-height: 40px; }
@@ -804,7 +805,7 @@ html.overlay-window, html.overlay-window body { background: transparent; }
 }
 @media (min-width: 1680px) {
   .settings-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-  .settings-body > :is(#s-shortcuts, #s-permissions, #s-transcription, #s-local-models, #s-ai-polish, .error) { grid-column: 1 / -1; }
+  .settings-body > :not(#s-voice-input, #s-text-insertion, #s-account, #s-about) { grid-column: 1 / -1; }
 }
 @media (min-width: 1920px) {
   :root { --gutter: 40px; }

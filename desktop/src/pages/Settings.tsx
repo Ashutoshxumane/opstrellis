@@ -26,9 +26,10 @@ const LANGUAGES: [string, string][] = [
   ["hi", "Hindi"], ["ja", "Japanese"], ["ko", "Korean"], ["zh", "Chinese"],
 ];
 const GROUPS: [string, string[]][] = [
-  ["App", ["General", "Privacy", "Account", "About"]],
+  ["App", ["General"]],
   ["Dictation", ["Shortcuts", "Voice input", "Text insertion", "Permissions"]],
   ["Speech & AI", ["Transcription", "Local models", "AI polish"]],
+  ["Account & privacy", ["Privacy", "Account", "About"]],
 ];
 const SECTIONS = GROUPS.flatMap(([, sections]) => sections);
 
@@ -82,11 +83,6 @@ export default function SettingsPage(props: Props) {
             </Row>
           </SettingsSection>
 
-          <SettingsSection title="Privacy"><Privacy {...props} /></SettingsSection>
-          <SettingsSection title="Account"><Account {...props} /></SettingsSection>
-
-          <SettingsSection title="About"><About /></SettingsSection>
-
           <SettingsSection title="Shortcuts">
             <Shortcuts {...props} />
             {props.saveError && <div className="error">{props.saveError}</div>}
@@ -134,6 +130,11 @@ export default function SettingsPage(props: Props) {
           <SettingsSection title="AI polish" desc="AI polish cleans up dictations, runs transforms and command mode, and summarizes meetings.">
             <LlmSection settings={settings} set={set} saveNow={props.saveNow} />
           </SettingsSection>
+
+          <SettingsSection title="Privacy"><Privacy {...props} /></SettingsSection>
+          <SettingsSection title="Account"><Account {...props} /></SettingsSection>
+
+          <SettingsSection title="About"><About /></SettingsSection>
 
         </div>
       </div>
