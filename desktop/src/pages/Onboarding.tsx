@@ -145,7 +145,7 @@ function TryIt({ hotkey, command, ai }: { hotkey: string; command: string; ai: b
       {error && <div className="error">{error}</div>}
       {result && (ai
         ? <p className="onb-text">Now select your sentence, hold <Keys combo={command} /> and say <i>“make it more formal”</i>. Command mode rewrites any selected text by voice.</p>
-        : <p className="meta">Tip: turn on AI polish in Settings → AI to rewrite selected text by voice with <Keys combo={command} />.</p>)}
+        : <p className="meta">Tip: turn on AI polish in Settings → AI polish to rewrite selected text by voice with <Keys combo={command} />.</p>)}
     </>
   );
 }

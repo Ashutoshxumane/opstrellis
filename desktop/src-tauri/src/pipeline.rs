@@ -330,7 +330,7 @@ impl App {
             return Err(anyhow!("No transcription provider is enabled. Add one in Settings → Transcription."));
         }
         if mode == Mode::Command && !settings.llm.enabled {
-            return Err(anyhow!("Command mode needs AI. Turn on AI polish in Settings → AI."));
+            return Err(anyhow!("Command mode needs AI. Turn on AI polish in Settings → AI polish."));
         }
         if mode == Mode::Command && settings.llm.provider == crate::polish::PROVIDER {
             return Err(anyhow!("Command mode needs a cloud or OpenAI-compatible AI provider; {} only polishes dictation.", crate::polish::NAME));

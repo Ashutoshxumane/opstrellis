@@ -1,7 +1,8 @@
 // Small shared UI pieces and helpers.
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useEvent, type ModelDownload, type Settings } from "./api";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useEvent, type ModelDownload, type Settings, type Theme } from "./api";
 import { Icon } from "./icons";
 
 export type SetSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => void;
@@ -40,6 +41,34 @@ export function Search({ value, onChange, placeholder = "Search" }: { value: str
 
 /** The webview runs on macOS (the browser preview follows the machine it runs on). */
 export const IS_MAC = /Mac/.test(navigator.userAgent);
+
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+let chosenTheme: Theme = "system";
+const paintTheme = () => {
+  const root = document.documentElement;
+  const theme = chosenTheme === "dark" || (chosenTheme === "system" && darkQuery.matches) ? "dark" : "light";
+  if (root.dataset.theme === theme) return;
+  root.classList.add("theme-switching");
+  root.dataset.theme = theme;
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
+};
+darkQuery.addEventListener("change", paintTheme);
+
+/** Applies the appearance choice; remembered so the next launch paints the right theme at once. */
+export function applyTheme(theme: Theme | null | undefined) {
+  const next = theme === "light" || theme === "dark" ? theme : "system";
+  const changed = next !== chosenTheme;
+  chosenTheme = next;
+  try { localStorage.setItem("theme", chosenTheme); } catch {}
+  paintTheme();
+  if (changed && "__TAURI_INTERNALS__" in window) getCurrentWindow().setTheme(next === "system" ? null : next).catch(() => {});
+}
+
+export const isDarkTheme = (t: Theme) => t === "dark" || (t !== "light" && darkQuery.matches);
+
+export function initialTheme(): Theme {
+  try { return (localStorage.getItem("theme") as Theme | null) ?? "system"; } catch { return "system"; }
+}
 
 // Shortcuts are stored as accelerators ("Ctrl+Shift+Space", "Super+K", "Fn", "RightOption") and shown with each
 // platform's own key names: ⌃ Control, ⌥ Option, ⇧ Shift, ⌘ Command on macOS; Ctrl, Alt, Shift, Super on Linux.
@@ -93,6 +122,13 @@ export function Keys({ combo }: { combo: string }) {
 export function Modal({ title, onClose, children, footer, className }: {
   title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; className?: string;
 }) {
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented && !e.isComposing) close.current(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return createPortal(
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={"modal" + (className ? " " + className : "")} role="dialog" aria-label={typeof title === "string" ? title : undefined}>
@@ -122,15 +158,15 @@ export function Tabs<T extends string>({ tabs, value, onChange, label }: { tabs:
   );
 }
 
-/** A page: sticky glass header (title left, actions right) over a centred content column. Inside a
+/** A page: one translucent toolbar row (title, tabs, actions) over the content. Inside a
  * page group, the group's title and tabs replace the page's own title. */
 export function Page({ title, actions, children, className }: { title: string; actions?: ReactNode; children?: ReactNode; className?: string }) {
   const group = useContext(PageGroup);
   return (
     <div className={"page" + (className ? " " + className : "")}>
-      <header className="page-head">
-        <div className="page-head-inner">
-          <h1 className="page-title">{group?.title ?? title}</h1>
+      <header className="page-head" data-tauri-drag-region>
+        <div className="page-head-inner" data-tauri-drag-region>
+          <h1 className="page-title" data-tauri-drag-region>{group?.title ?? title}</h1>
           {group?.tabs}
           {actions && <div className="page-actions">{actions}</div>}
         </div>

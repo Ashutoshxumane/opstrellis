@@ -34,7 +34,7 @@ const settings: Settings = {
   insertion: { method: "paste", restoreClipboard: true, pasteDelayMs: 50 },
   privacy: { historyRetentionDays: null, syncUsage: true },
   cloud: { baseUrl: "https://cloud.opstrellis.app", email: null },
-  overlay: true, sounds: true, launchAtLogin: false, showInDock: true,
+  overlay: true, sounds: true, launchAtLogin: false, showInDock: true, theme: "system",
   onboarded: !location.search.includes("onboarding"),
 };
 const secrets = new Set(["stt:a1"]);

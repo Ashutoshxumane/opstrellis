@@ -38,7 +38,7 @@ export default function Transforms({ settings, set }: SettingsProps) {
       <div className="card hint">
         <span className="hint-main">Select text, hold <Keys combo={settings.hotkeys.command} /> and say what to change, or the name of an action below.</span>
       </div>
-      {!settings.llm.enabled && <p className="note">Command mode needs AI polish. Turn it on in Settings → AI.</p>}
+      {!settings.llm.enabled && <p className="note">Command mode needs AI polish. Turn it on in Settings → AI polish.</p>}
       {error && <div className="error">{error}</div>}
 
       <div className="card list">

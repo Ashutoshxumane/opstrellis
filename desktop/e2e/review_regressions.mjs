@@ -39,7 +39,7 @@ const base = process.env.BASE_URL ?? 'http://localhost:1430/';
 const nav = (name) => page.locator('.nav-item').getByText(name, { exact: true }).click();
 try {
   await page.goto(`${base}?page=settings`);
-  const model = page.locator('#s-ai label').filter({ hasText: /^Model$/ }).locator('input');
+  const model = page.locator('#s-ai-polish label').filter({ hasText: /^Model$/ }).locator('input');
   await model.fill('pending-model');
   await page.evaluate(async () => {
     const settings = await window.__TAURI_INTERNALS__.invoke('get_settings');
@@ -50,7 +50,7 @@ try {
   const saved = await page.evaluate(() => window.review.saves.at(-1));
   assert.equal(saved.llm.enabled, false, 'pending save must keep the tray toggle');
   assert.equal(saved.llm.model, 'pending-model', 'tray toggle must keep pending model edits');
-  await page.locator('#s-ai').getByRole('switch', { name: 'AI polish' }).click();
+  await page.locator('#s-ai-polish').getByRole('switch', { name: 'AI polish' }).click();
   await model.waitFor();
   assert.equal(await model.inputValue(), 'pending-model');
   console.log('PASS tray toggle with pending AI settings edits');
@@ -66,12 +66,12 @@ try {
   });
   // A later rejected edit must roll back to the tray's accepted state, even if an older save's
   // acknowledgement arrived after that event.
-  await page.locator('#s-ai').getByRole('switch', { name: 'AI polish' }).click();
+  await page.locator('#s-ai-polish').getByRole('switch', { name: 'AI polish' }).click();
   await page.waitForFunction(() => window.review.pendingSaves.length === 2);
   await page.evaluate(() => window.review.pendingSaves[1].reject('save failed'));
-  await page.waitForFunction(() => document.querySelector('#s-ai [role=switch]')?.getAttribute('aria-checked') === 'false');
+  await page.waitForFunction(() => document.querySelector('#s-ai-polish [role=switch]')?.getAttribute('aria-checked') === 'false');
   await page.evaluate(() => { window.review.delaySaves = false; });
-  await page.locator('#s-ai').getByRole('switch', { name: 'AI polish' }).click();
+  await page.locator('#s-ai-polish').getByRole('switch', { name: 'AI polish' }).click();
   console.log('PASS stale settings acknowledgement and failure rollback');
 
   await nav('Notes');

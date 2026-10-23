@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg, useEvent, type DictationState, type Settings } from "./api";
 import { Icon, Logo, type IconName } from "./icons";
-import { comboText, PageGroup, Tabs, type SetSetting } from "./ui";
+import { applyTheme, comboText, IS_MAC, isDarkTheme, PageGroup, Tabs, type SetSetting } from "./ui";
 import Home from "./pages/Home";
 import Insights from "./pages/Insights";
 import Dictionary from "./pages/Dictionary";
@@ -26,6 +26,7 @@ const GROUPS = {
   library: [["dictionary", "Dictionary"], ["snippets", "Snippets"], ["actions", "Actions"]],
 } as const satisfies Record<string, readonly (readonly [string, string])[]>;
 type Group = keyof typeof GROUPS;
+const MOD = IS_MAC ? "Super" : "Ctrl";
 /** Old page ids (links, tests) still land on the right tab. */
 const MOVED: Record<string, [Group, string]> = {
   scratchpad: ["notes", "notes"], notetaker: ["notes", "meetings"],
@@ -68,6 +69,23 @@ export default function App() {
     // A shortcut that failed to register at startup was reported before we were listening.
     api.permissions().then((p) => p.hotkeyError && setToast(`Shortcut unavailable: ${p.hotkeyError}`), () => {});
   }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.shiftKey || (IS_MAC ? !e.metaKey || e.ctrlKey : !e.ctrlKey || e.metaKey)) return;
+      if (document.querySelector("[role=dialog]")) return;
+      const n = Number(/^Digit(\d)$/.exec(e.code)?.[1]);
+      if (n >= 1 && n <= PAGES.length) setPage(PAGES[n - 1].id);
+      else if (e.code === "Comma") setPage("settings");
+      else if (e.code === "KeyF") document.querySelector<HTMLInputElement>(".panel .search input")?.focus();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => { if (settings) applyTheme(settings.theme); }, [settings?.theme]);
 
   useEvent("dictation-state", setDictation);
   useEvent("dictation-error", (msg) => setToast(msg));
@@ -129,26 +147,37 @@ export default function App() {
   if (!settings) return <div className="center-msg">Loading…</div>;
 
   const props = { settings, set };
+  const dark = isDarkTheme(settings.theme);
   const statusLabel = dictation.status === "recording" ? (!dictation.micReady ? "Opening mic…" : dictation.mode === "command" ? "Command…" : "Listening…")
     : dictation.status === "processing" ? (dictation.stage === "polishing" ? "Polishing…" : "Transcribing…") : "Ready";
 
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand"><Logo />OpsTrellis</div>
+        <div className="sidebar-top" data-tauri-drag-region>
+          <div className="brand" data-tauri-drag-region><Logo />OpsTrellis</div>
+        </div>
         <nav className="nav">
-          {PAGES.map((p) => (
+          {PAGES.map((p, i) => (
             <button key={p.id} className={"nav-item" + (page === p.id ? " active" : "")} onClick={() => setPage(p.id)}
+              title={`${p.label} (${comboText(`${MOD}+${i + 1}`)})`}
               aria-current={page === p.id ? "page" : undefined}>
               <Icon name={p.icon} />{p.label}
             </button>
           ))}
         </nav>
         <div className="sidebar-foot">
-          <button className={"nav-item" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}
-            aria-current={page === "settings" ? "page" : undefined}>
-            <Icon name="settings" />Settings
-          </button>
+          <div className="foot-row">
+            <button className={"nav-item" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}
+              title={`Settings (${comboText(`${MOD}+Comma`)})`}
+              aria-current={page === "settings" ? "page" : undefined}>
+              <Icon name="settings" />Settings
+            </button>
+            <button className="icon-btn" onClick={() => set("theme", dark ? "light" : "dark")}
+              title={dark ? "Switch to light mode" : "Switch to dark mode"} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
+              <Icon name={dark ? "sun" : "moon"} />
+            </button>
+          </div>
           <button className={"status " + dictation.status}
             title={dictation.status === "idle" ? "Start dictation" : "Stop dictation"}
             onClick={() => (dictation.status === "idle" ? api.startDictation() : api.stopDictation()).catch((e) => setToast(errMsg(e)))}>

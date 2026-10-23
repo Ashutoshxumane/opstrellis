@@ -113,6 +113,8 @@ pub struct Settings {
     pub launch_at_login: bool,
     /// macOS: off keeps OpsTrellis out of the Dock and ⌘Tab; it lives in the menu bar.
     pub show_in_dock: bool,
+    /// "system" | "light" | "dark"
+    pub theme: String,
     pub onboarded: bool,
 }
 
@@ -204,6 +206,7 @@ impl Default for Settings {
             sounds: true,
             launch_at_login: false,
             show_in_dock: true,
+            theme: "system".into(),
             onboarded: false,
         }
     }

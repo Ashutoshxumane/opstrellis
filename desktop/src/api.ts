@@ -42,6 +42,7 @@ export interface Settings {
   sounds: boolean;
   launchAtLogin: boolean;
   showInDock: boolean;
+  theme: Theme;
   onboarded: boolean;
 }
 
@@ -91,7 +92,10 @@ export interface Permissions {
 export interface PolishModel { name: string; sizeMb: number; installed: boolean; downloading: boolean }
 export interface ModelDownload { id: string; downloaded: number; total: number; done: boolean; error: string | null }
 
+export type Theme = "system" | "light" | "dark";
+
 export interface Events {
+  "theme-changed": Theme;
   "dictation-state": DictationState;
   "audio-level": number;
   "partial-transcript": string;

@@ -223,8 +223,8 @@ def t_action_output():
 def t_ai_test_and_repolish_errors():
     """AI is configured against an unreachable endpoint: both the Test button and Polish again say so."""
     nav("Settings")
-    d.find_element(By.XPATH, "//section[@id='s-ai']//button[normalize-space()='Test']").click()
-    WebDriverWait(d, 20).until(lambda _: d.find_elements(By.XPATH, "//section[@id='s-ai']//span[contains(@class,'error')]"))
+    d.find_element(By.XPATH, "//section[@id='s-ai-polish']//button[normalize-space()='Test']").click()
+    WebDriverWait(d, 20).until(lambda _: d.find_elements(By.XPATH, "//section[@id='s-ai-polish']//span[contains(@class,'error')]"))
     nav("Home")
     d.find_element(By.XPATH, "//button[normalize-space()='Show original']").click()
     assert d.find_element(By.CSS_SELECTOR, ".li-original").text, "original transcript shown"

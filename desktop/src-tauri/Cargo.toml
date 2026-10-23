@@ -1,6 +1,6 @@
 [package]
 name = "opstrellis"
-version = "0.2.0"
+version = "0.3.0"
 description = "Voice dictation for every app"
 edition = "2021"
 license = "MIT"
@@ -13,7 +13,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-api"] }
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-autostart = "2"

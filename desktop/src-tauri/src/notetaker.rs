@@ -45,7 +45,7 @@ pub async fn follow_up(app: &App, note_id: i64, kind: &str) -> Result<String> {
     let instruction = FOLLOW_UPS.iter().find(|(k, _)| *k == kind).map(|(_, i)| *i).ok_or_else(|| anyhow!("Unknown follow-up \"{kind}\""))?;
     let settings = app.settings();
     if !settings.llm.enabled {
-        return Err(anyhow!("Follow-ups need AI. Turn on AI polish in Settings → AI."));
+        return Err(anyhow!("Follow-ups need AI. Turn on AI polish in Settings → AI polish."));
     }
     let note = app.db.get_note(note_id)?.filter(|n| n.kind == "meeting").ok_or_else(|| anyhow!("Meeting not found"))?;
     let system = "You help the user follow up on a meeting. The user message contains the meeting notes inside <meeting> tags; use only information from them.";
