@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="https://mtr1920.github.io/opstrellis/">Website</a> ·
   <a href="#install">Install</a> ·
   <a href="#first-five-minutes">Get started</a> ·
   <a href="#features">Features</a> ·
@@ -26,21 +27,31 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/pill.png" width="560" alt="The OpsTrellis recording pill showing live text while dictating">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site/img/pill-dark.png">
+    <img src="site/img/pill-light.png" width="560" alt="The OpsTrellis recording pill showing live text while dictating">
+  </picture>
 </p>
 
 - **Works in every app:** your editor, a terminal, a browser, email, chat or an AI assistant, with
   live text in a small recording pill while you speak.
 - **Private by default:** transcribes offline on your computer out of the box. Cloud providers
   (OpenAI, Deepgram, AssemblyAI and more) are optional and use your own keys.
-- **Writes like you would:** removes "um"s, fixes self-corrections, keeps code names and paths
-  intact, and adapts its tone per app. Optional AI polish runs offline too.
+- **Writes like you would:** removes "um"s, follows voice commands, keeps code names and paths
+  intact, and adapts its tone per app. Optional AI polish, offline too, also fixes grammar and
+  self-corrections.
 - **Built for developers:** knows `kubectl` from "cube control", writes `main.rs` when you say
   "main dot rs", and cleans up prompts for ChatGPT, Claude, Cursor or Claude Code.
 
 <p align="center">
-  <img src="docs/images/home.png" width="49%" alt="Home: dictation history and stats">
-  <img src="docs/images/settings.png" width="49%" alt="Settings: shortcuts and general options">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site/img/home-dark.png">
+    <img src="site/img/home-light.png" width="49%" alt="Home: shortcut reminder, dictation stats and searchable history">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site/img/settings-dark.png">
+    <img src="site/img/settings-light.png" width="49%" alt="Settings: appearance, recording pill, sounds and shortcuts">
+  </picture>
 </p>
 
 Free and open source under the [MIT License](#license).
@@ -101,6 +112,10 @@ are kept. To check the installed version, run `opstrellis --version` or open Set
   afterwards.
 - **Always-on fallback:** if you change the dictation shortcut, **Ctrl+Shift+Space** keeps working
   as a backup. Press it to start, press it again to finish.
+- **Light or dark:** Settings → General → **Appearance** (System, Light or Dark), or the sun/moon
+  button at the bottom of the sidebar. The recording pill follows it.
+- **In the app:** ⌘1–⌘5 open the sidebar pages, ⌘, opens Settings, ⌘F searches the current page
+  (Ctrl on Linux). Esc closes dialogs.
 - **Menu bar only:** turn off Settings → General → **Show in Dock** and OpsTrellis disappears from
   the Dock and ⌘Tab (Linux: the dock and taskbar). It keeps running and opens from its menu bar /
   tray icon.
