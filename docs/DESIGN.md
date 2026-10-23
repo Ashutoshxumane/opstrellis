@@ -33,6 +33,7 @@ replaces "Aurora Glass": users found the gradients dated and the alignment slopp
   --surface: #ffffff;       /* cards, sidebar */
   --surface-2: #f1f1f3;     /* hover, inputs, kbd */
   --line: #e4e4e7;          /* 1px borders/dividers */
+  --line-strong: #d4d4d8;   /* hovered input, button and card borders */
   --text: #18181b;
   --text-2: #52525b;        /* secondary */
   --muted: #71717a;         /* tertiary, meta; AA on --surface */
@@ -47,11 +48,12 @@ replaces "Aurora Glass": users found the gradients dated and the alignment slopp
   --blur: saturate(180%) blur(20px);
   --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08); /* modals/menus/toasts only */
   --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1); --fast: 0.12s;
   --font: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI Variable", Cantarell, sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e0e10; --surface: #161618; --surface-2: #1f1f22; --line: #2a2a2e;
+    --bg: #0e0e10; --surface: #161618; --surface-2: #1f1f22; --line: #2a2a2e; --line-strong: #3a3a40;
     --text: #ededef; --text-2: #b4b4bb; --muted: #8b8b94;
     --accent: #5b7cfa; --accent-hover: #6d8bfb; --accent-soft: #1d2340; --accent-text: #93a8ff;
     --glass: rgba(22, 22, 24, 0.72); --glass-line: rgba(255, 255, 255, 0.08);
@@ -62,6 +64,16 @@ replaces "Aurora Glass": users found the gradients dated and the alignment slopp
 
 Without `backdrop-filter`, or when `prefers-reduced-transparency` is set, glass falls back to
 `--surface`.
+
+## Motion
+
+Smooth, never showy. Everything uses `--ease`; nothing bounces.
+
+- Interactive controls fade background, border and text colour over `--fast` (120 ms).
+- Pressing a button, nav item, tab or chip scales it to 0.98.
+- Hovered inputs, buttons and tone cards take `--line-strong`; rows in list cards take `--surface-2`.
+- A page's content fades up 4px on open (180 ms). Modals pop in (180 ms); toasts rise 8px (200 ms).
+- `prefers-reduced-motion` turns all of it off.
 
 ## Type scale (Inter, tabular numbers on all figures)
 
@@ -124,6 +136,11 @@ Without `backdrop-filter`, or when `prefers-reduced-transparency` is set, glass 
 - **Lists** (Dictionary, Snippets, Transforms) use the same list card. Notes, Notetaker, Style and
   Settings follow the same grid. Style tone options are equal-width selectable cards: the selected
   one has an accent border and an `--accent-soft` fill, with a check icon.
+- **Settings.** A sticky section nav on the left, grouped under overlines: Dictation (Shortcuts,
+  Voice input, Text insertion, Permissions), Speech & AI (Transcription, Local models, AI polish) and
+  App (General, Privacy, Account, About). The body follows the same order, one card per section.
+- **Keyboard.** ⌘1–⌘5 (Ctrl on Linux) open the sidebar pages, ⌘, opens Settings, ⌘F focuses the
+  page's search field. Nav items name their shortcut in a tooltip.
 - **Overlay pill.**
   - Shape: 44 high, radius 22. Surface `rgba(24,24,27,.88)` with blur and a 1px
     `rgba(255,255,255,.1)` hairline. The width follows the state over 160 ms:

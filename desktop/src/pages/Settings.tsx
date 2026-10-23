@@ -25,7 +25,12 @@ const LANGUAGES: [string, string][] = [
   ["tr", "Turkish"], ["sv", "Swedish"], ["da", "Danish"], ["no", "Norwegian"], ["fi", "Finnish"], ["ar", "Arabic"],
   ["hi", "Hindi"], ["ja", "Japanese"], ["ko", "Korean"], ["zh", "Chinese"],
 ];
-const SECTIONS = ["Shortcuts", "General", "Microphone", "Language", "Transcription", "Local models", "AI", "Text insertion", "Privacy", "Account", "Permissions", "About"];
+const GROUPS: [string, string[]][] = [
+  ["Dictation", ["Shortcuts", "Voice input", "Text insertion", "Permissions"]],
+  ["Speech & AI", ["Transcription", "Local models", "AI polish"]],
+  ["App", ["General", "Privacy", "Account", "About"]],
+];
+const SECTIONS = GROUPS.flatMap(([, sections]) => sections);
 
 type Props = SettingsProps & { saveError: string | null; saveNow: () => Promise<void> };
 
@@ -40,9 +45,14 @@ export default function SettingsPage(props: Props) {
     <Page title="Settings">
       <div className="settings">
         <nav className="subnav" aria-label="Settings sections">
-          {SECTIONS.map((s) => (
-            <button key={s} className={current === anchor(s) ? "active" : ""}
-              onClick={() => document.getElementById(anchor(s))?.scrollIntoView({ behavior: "smooth" })}>{s}</button>
+          {GROUPS.map(([group, sections]) => (
+            <div key={group} className="subnav-group">
+              <div className="subnav-label">{group}</div>
+              {sections.map((s) => (
+                <button key={s} className={current === anchor(s) ? "active" : ""} aria-current={current === anchor(s) ? "true" : undefined}
+                  onClick={() => document.getElementById(anchor(s))?.scrollIntoView({ behavior: "smooth" })}>{s}</button>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="settings-body">
@@ -51,44 +61,13 @@ export default function SettingsPage(props: Props) {
             {props.saveError && <div className="error">{props.saveError}</div>}
           </SettingsSection>
 
-          <SettingsSection title="General">
-            <Row title="Show recording pill" desc="A small indicator at the bottom of the screen while you talk.">
-              <Toggle checked={settings.overlay} onChange={(v) => set("overlay", v)} />
-            </Row>
-            <Row title="Sounds" desc="Play a soft sound when recording starts and stops.">
-              <Toggle checked={settings.sounds} onChange={(v) => set("sounds", v)} />
-            </Row>
-            <Row title="Launch at login">
-              <Toggle checked={settings.launchAtLogin} onChange={(v) => set("launchAtLogin", v)} />
-            </Row>
-            <Row title={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"}
-              desc={IS_MAC
-                ? "Off: OpsTrellis stays in the menu bar only and keeps running in the background. Open it from the menu bar icon."
-                : "Off: OpsTrellis stays in the system tray only and keeps running in the background. Some Wayland desktops still show it in the dock."}>
-              <Toggle checked={settings.showInDock} onChange={(v) => set("showInDock", v)} label={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"} />
-            </Row>
-          </SettingsSection>
-
-          <SettingsSection title="Microphone"><Microphone {...props} /></SettingsSection>
-
-          <SettingsSection title="Language">
+          <SettingsSection title="Voice input">
+            <Microphone {...props} />
             <Row title="Spoken language" desc="Setting it explicitly is faster and more accurate than detection.">
               <select value={settings.language} onChange={(e) => set("language", e.target.value)}>
                 {LANGUAGES.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
               </select>
             </Row>
-          </SettingsSection>
-
-          <SettingsSection title="Transcription" desc="OpsTrellis uses the first enabled provider. If it fails, the next one takes over.">
-            <Providers {...props} localIds={models.filter((m) => m.installed).map((m) => m.id)} />
-          </SettingsSection>
-
-          <SettingsSection title="Local models" desc="Run speech recognition on this computer. Nothing leaves your device.">
-            <LocalModels models={models} reload={loadModels} />
-          </SettingsSection>
-
-          <SettingsSection title="AI" desc="AI polish cleans up dictations, runs transforms and command mode, and summarizes meetings.">
-            <LlmSection settings={settings} set={set} saveNow={props.saveNow} />
           </SettingsSection>
 
           <SettingsSection title="Text insertion">
@@ -111,10 +90,41 @@ export default function SettingsPage(props: Props) {
             </Row>
           </SettingsSection>
 
+          <SettingsSection title="Permissions"><PermissionsInfo shortcuts={settings.hotkeys.dictate + " " + settings.hotkeys.command} /></SettingsSection>
+
+          <SettingsSection title="Transcription" desc="OpsTrellis uses the first enabled provider. If it fails, the next one takes over.">
+            <Providers {...props} localIds={models.filter((m) => m.installed).map((m) => m.id)} />
+          </SettingsSection>
+
+          <SettingsSection title="Local models" desc="Run speech recognition on this computer. Nothing leaves your device.">
+            <LocalModels models={models} reload={loadModels} />
+          </SettingsSection>
+
+          <SettingsSection title="AI polish" desc="AI polish cleans up dictations, runs transforms and command mode, and summarizes meetings.">
+            <LlmSection settings={settings} set={set} saveNow={props.saveNow} />
+          </SettingsSection>
+
+          <SettingsSection title="General">
+            <Row title="Show recording pill" desc="A small indicator at the bottom of the screen while you talk.">
+              <Toggle checked={settings.overlay} onChange={(v) => set("overlay", v)} />
+            </Row>
+            <Row title="Sounds" desc="Play a soft sound when recording starts and stops.">
+              <Toggle checked={settings.sounds} onChange={(v) => set("sounds", v)} />
+            </Row>
+            <Row title="Launch at login">
+              <Toggle checked={settings.launchAtLogin} onChange={(v) => set("launchAtLogin", v)} />
+            </Row>
+            <Row title={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"}
+              desc={IS_MAC
+                ? "Off: OpsTrellis stays in the menu bar only and keeps running in the background. Open it from the menu bar icon."
+                : "Off: OpsTrellis stays in the system tray only and keeps running in the background. Some Wayland desktops still show it in the dock."}>
+              <Toggle checked={settings.showInDock} onChange={(v) => set("showInDock", v)} label={IS_MAC ? "Show in Dock" : "Show in dock and taskbar"} />
+            </Row>
+          </SettingsSection>
+
           <SettingsSection title="Privacy"><Privacy {...props} /></SettingsSection>
           <SettingsSection title="Account"><Account {...props} /></SettingsSection>
 
-          <SettingsSection title="Permissions"><PermissionsInfo shortcuts={settings.hotkeys.dictate + " " + settings.hotkeys.command} /></SettingsSection>
           <SettingsSection title="About"><About /></SettingsSection>
         </div>
       </div>
@@ -406,7 +416,7 @@ function Microphone({ settings, set }: SettingsProps) {
   useEffect(() => void api.listInputDevices().then(setDevices, () => {}), []);
   const missing = settings.microphone && !devices.includes(settings.microphone);
   return (
-    <Row title="Input device">
+    <Row title="Microphone">
       <select value={settings.microphone ?? ""} onChange={(e) => set("microphone", e.target.value || null)}>
         <option value="">System default</option>
         {missing && <option value={settings.microphone!}>{settings.microphone} (not connected)</option>}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, errMsg, useEvent, type DictationState, type Settings } from "./api";
 import { Icon, Logo, type IconName } from "./icons";
-import { comboText, PageGroup, Tabs, type SetSetting } from "./ui";
+import { comboText, IS_MAC, PageGroup, Tabs, type SetSetting } from "./ui";
 import Home from "./pages/Home";
 import Insights from "./pages/Insights";
 import Dictionary from "./pages/Dictionary";
@@ -26,6 +26,7 @@ const GROUPS = {
   library: [["dictionary", "Dictionary"], ["snippets", "Snippets"], ["actions", "Actions"]],
 } as const satisfies Record<string, readonly (readonly [string, string])[]>;
 type Group = keyof typeof GROUPS;
+const MOD = IS_MAC ? "Super" : "Ctrl";
 /** Old page ids (links, tests) still land on the right tab. */
 const MOVED: Record<string, [Group, string]> = {
   scratchpad: ["notes", "notes"], notetaker: ["notes", "meetings"],
@@ -67,6 +68,20 @@ export default function App() {
     api.setShortcutRecording(false).catch(() => {});
     // A shortcut that failed to register at startup was reported before we were listening.
     api.permissions().then((p) => p.hotkeyError && setToast(`Shortcut unavailable: ${p.hotkeyError}`), () => {});
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.shiftKey || (IS_MAC ? !e.metaKey || e.ctrlKey : !e.ctrlKey || e.metaKey)) return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= PAGES.length) setPage(PAGES[n - 1].id);
+      else if (e.key === ",") setPage("settings");
+      else if (e.key.toLowerCase() === "f") document.querySelector<HTMLInputElement>(".panel .search input")?.focus();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEvent("dictation-state", setDictation);
@@ -137,8 +152,9 @@ export default function App() {
       <aside className="sidebar">
         <div className="brand"><Logo />OpsTrellis</div>
         <nav className="nav">
-          {PAGES.map((p) => (
+          {PAGES.map((p, i) => (
             <button key={p.id} className={"nav-item" + (page === p.id ? " active" : "")} onClick={() => setPage(p.id)}
+              title={`${p.label} (${comboText(`${MOD}+${i + 1}`)})`}
               aria-current={page === p.id ? "page" : undefined}>
               <Icon name={p.icon} />{p.label}
             </button>
@@ -146,6 +162,7 @@ export default function App() {
         </nav>
         <div className="sidebar-foot">
           <button className={"nav-item" + (page === "settings" ? " active" : "")} onClick={() => setPage("settings")}
+            title={`Settings (${comboText(`${MOD}+Comma`)})`}
             aria-current={page === "settings" ? "page" : undefined}>
             <Icon name="settings" />Settings
           </button>
