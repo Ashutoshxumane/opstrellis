@@ -211,7 +211,7 @@ button:disabled { cursor: default; }
 
 /* macOS app window: native vibrancy shows in the gaps and through both floating panels and the frosted cards. */
 html.mac-window, html.mac-window body, html.mac-window .app { background: transparent; }
-html.mac-window .brand { display: none; }
+html.mac-window .brand { margin-left: auto; }
 html.mac-window .content { background: var(--pane-glass); box-shadow: inset 0 0 0 1px var(--panel-edge), 0 0 0 1px var(--panel-line), var(--panel-shadow); }
 html.mac-window .page-head { background: var(--toolbar-glass); }
 html.mac-window .card:not(.tone-card.selected) { background: var(--card-glass); box-shadow: inset 0 1px 0 var(--panel-edge); }

@@ -95,7 +95,8 @@ Glass falls back to solid surfaces without `backdrop-filter` or when `prefers-re
 
 - **Sidebar.** A 220px floating panel, padding 0 8px 8px.
   - The top strip is 52px, the toolbar's height, and a window drag region centred on the toolbar title. On macOS it holds
-    the traffic lights; on Linux it holds the logo and name.
+    the traffic lights on the left and the logo and name on the right; on Linux the logo and name
+    sit on the left.
   - Nav items are 28px tall with a 2px gap, radius 6, 16px icons in `--text-2` with an 8px gap.
   - The selected item has a `--selected` tinted fill, with its icon in `--accent-text`.
   - The footer holds Settings and a one-line status row (dot, state, shortcut).
