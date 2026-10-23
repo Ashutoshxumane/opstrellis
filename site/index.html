@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpsTrellis: offline voice dictation for macOS and Linux</title>
+<meta name="description" content="Hold a key, talk, and clean text appears in any app. Free, open-source voice dictation for macOS and Linux that runs offline by default. Knows kubectl from cube control.">
+<link rel="canonical" href="https://mtr1920.github.io/opstrellis/">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="img/icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="OpsTrellis: voice dictation for macOS and Linux">
+<meta property="og:description" content="Hold a key, talk, and clean text appears in any app. Offline by default, free and open source.">
+<meta property="og:url" content="https://mtr1920.github.io/opstrellis/">
+<meta property="og:image" content="https://mtr1920.github.io/opstrellis/og.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://mtr1920.github.io/opstrellis/og.png">
+<meta name="color-scheme" content="light dark">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"OpsTrellis","applicationCategory":"ProductivityApplication","operatingSystem":"macOS, Linux","description":"Offline voice dictation for macOS and Linux: hold a key, talk, and clean text appears in any app.","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://opensource.org/licenses/MIT","url":"https://mtr1920.github.io/opstrellis/","downloadUrl":"https://github.com/mtr1920/opstrellis/releases/latest","codeRepository":"https://github.com/mtr1920/opstrellis"}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top wrap">
+  <a class="brand" href="./"><img src="img/icon.png" alt="" width="28" height="28">OpsTrellis</a>
+  <nav class="top-links">
+    <a href="#how">How it works</a>
+    <a href="#privacy">Privacy</a>
+    <a class="gh" href="https://github.com/mtr1920/opstrellis">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero wrap">
+  <div class="hero-copy">
+    <h1>Hold a key.<br>Talk.<br>Clean text appears.</h1>
+    <p class="lede">OpsTrellis is voice dictation for macOS and Linux. It works in every app, runs offline by default, and writes the way you would have typed it.</p>
+    <div class="install" id="install">
+      <code id="cmd">curl -fsSL https://raw.githubusercontent.com/mtr1920/opstrellis/main/install.sh | bash</code>
+      <button type="button" class="copy" data-copy="cmd">Copy</button>
+    </div>
+    <p class="fine">Apple-silicon Macs on macOS 11+, and Linux x86_64 (Ubuntu 22.04+). Run it again to update. Prefer a package? Get the <a href="https://github.com/mtr1920/opstrellis/releases/latest">.dmg, .deb or AppImage</a>.</p>
+  </div>
+
+  <figure class="demo" aria-label="Example: a spoken sentence becomes clean text">
+    <div class="win">
+      <div class="win-bar"><span></span><span></span><span></span><b id="demo-app">Slack</b></div>
+      <div class="win-body">
+        <p class="said" aria-hidden="true"><span class="said-label">You say</span><span id="demo-said"></span></p>
+        <div class="field"><span id="demo-typed"></span><i class="caret"></i></div>
+      </div>
+    </div>
+    <div class="pill" id="pill" data-state="rec">
+      <span class="dot"></span>
+      <svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
+      <span class="time" id="pill-time">0:00</span>
+      <span class="lattice" id="lattice" aria-hidden="true"></span>
+      <span class="pill-text" id="pill-text"></span>
+      <span class="pill-btns" aria-hidden="true">
+        <span><svg viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></svg></span>
+        <span><svg viewBox="0 0 16 16"><rect x="5" y="5" width="6" height="6" rx="1"/></svg></span>
+      </span>
+    </div>
+  </figure>
+</section>
+
+<section class="pairs wrap" id="how">
+  <h2>It writes what you meant</h2>
+  <p class="section-lede">Fillers go, voice commands work, and code stays code where you write code. Every line below is the app’s actual output, without any AI.</p>
+  <table>
+    <thead><tr><th scope="col">You say</th><th scope="col">It types</th></tr></thead>
+    <tbody>
+      <tr><td>“um so uh run cube control get pods” <small>in a terminal</small></td><td><code>so run kubectl get pods</code></td></tr>
+      <tr><td>“open main dot rs and add dash dash watch” <small>in a code editor</small></td><td><code>open main.rs and add --watch</code></td></tr>
+      <tr><td>“open main dot rs” <small>in an email</small></td><td>Open main.rs.</td></tr>
+      <tr><td>“first point new line second point”</td><td>First point<br>Second point.</td></tr>
+      <tr><td>“check the nest dev branch” <small>with nest dev in your dictionary</small></td><td>Check the feature/nest_dev branch.</td></tr>
+    </tbody>
+  </table>
+  <p class="fine">Turn on AI polish, offline or with your own key, and it also fixes grammar and self-corrections like “2pm, actually 3pm”.</p>
+</section>
+
+<section class="features wrap">
+  <div class="feature">
+    <h3>Every app, one shortcut</h3>
+    <p>Hold <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Space</kbd>, or just <kbd>fn</kbd> on a Mac. Tap once for hands-free. The text is pasted where your cursor is, and your clipboard is put back.</p>
+  </div>
+  <div class="feature">
+    <h3>Tuned for prompts and terminals</h3>
+    <p>Dictating to ChatGPT, Claude, Cursor or Claude Code keeps file names, paths and flags as code. About 300 developer terms are built in.</p>
+  </div>
+  <div class="feature">
+    <h3>Command mode</h3>
+    <p>Select text, hold the command key and say what to do: “make this more formal”, “reply saying Thursday works”, “summarize”.</p>
+  </div>
+  <div class="feature">
+    <h3>A tone for each app</h3>
+    <p>Casual in Slack, formal in email, structured in AI prompts. OpsTrellis picks the style from the app you are in.</p>
+  </div>
+</section>
+
+<section class="shots wrap" aria-label="Screenshot">
+  <picture>
+    <source srcset="img/home-dark.png" media="(prefers-color-scheme: dark)">
+    <img src="img/home-light.png" width="1180" height="740" alt="OpsTrellis Home: the shortcut reminder, words dictated, words per minute, and a searchable history of dictations from Slack, Cursor and Thunderbird." loading="lazy">
+  </picture>
+  <p class="caption">Every dictation is kept in a searchable history, with the original transcript one click away. Keep it forever, 7 or 30 days, or turn it off.</p>
+</section>
+
+<section class="privacy wrap" id="privacy">
+  <h2>Your voice stays on your computer</h2>
+  <div class="privacy-grid">
+    <p>Out of the box, speech recognition runs locally with models like NVIDIA Parakeet, Whisper and Moonshine. Nothing is uploaded.</p>
+    <p>The microphone is open only while you record, and audio is never saved. History can be kept, limited to 7 or 30 days, or turned off.</p>
+    <p>Want the cloud? Bring your own key for OpenAI, Deepgram, AssemblyAI, Groq and others. Keys live in the Keychain or Secret Service.</p>
+  </div>
+</section>
+
+<section class="cta wrap">
+  <h2>Try it in a minute</h2>
+  <div class="install">
+    <code id="cmd2">curl -fsSL https://raw.githubusercontent.com/mtr1920/opstrellis/main/install.sh | bash</code>
+    <button type="button" class="copy" data-copy="cmd2">Copy</button>
+  </div>
+  <p class="fine">Free and open source under the MIT License. Settings, history and models are kept when you update.</p>
+</section>
+</main>
+
+<footer class="foot wrap">
+  <span>OpsTrellis, MIT License</span>
+  <a href="https://github.com/mtr1920/opstrellis">Source on GitHub</a>
+  <a href="https://github.com/mtr1920/opstrellis/releases">Releases</a>
+  <a href="https://github.com/mtr1920/opstrellis/issues">Report an issue</a>
+</footer>
+
+<script src="demo.js" defer></script>
+</body>
+</html>

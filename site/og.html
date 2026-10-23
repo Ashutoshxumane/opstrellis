@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpsTrellis social preview</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; }
+  body {
+    width: 1280px; height: 640px; box-sizing: border-box; padding: 72px 80px;
+    display: grid; grid-template-columns: 1fr 470px; gap: 56px; align-items: center;
+    background: #e9edf3; color: #141821; font-family: "Schibsted Grotesk", sans-serif;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; font-size: 30px; font-weight: 800; }
+  .brand img { width: 52px; height: 52px; border-radius: 12px; }
+  h1 { margin: 0 0 28px; font-size: 76px; line-height: 0.98; font-weight: 800; letter-spacing: -0.035em; }
+  p { margin: 0; font-size: 27px; line-height: 1.4; color: #4a5265; }
+  .card { padding: 32px; border: 1px solid #cdd3de; border-radius: 20px; background: #f8f9fb; box-shadow: 0 24px 48px -24px rgba(20, 24, 33, 0.3); }
+  .label { margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #4a5265; }
+  .said { margin-bottom: 28px; font-size: 23px; color: #4a5265; }
+  .said s { color: #d9363e; text-decoration-thickness: 3px; }
+  code { display: inline-block; padding: 8px 14px; border-radius: 10px; background: #dde3ec; font: 500 25px "JetBrains Mono", monospace; color: #141821; }
+</style>
+</head>
+<body>
+  <div>
+    <div class="brand"><img src="img/icon.png" alt="">OpsTrellis</div>
+    <h1>Hold a key.<br>Talk.<br>Clean text appears.</h1>
+    <p>Voice dictation for macOS and Linux. Offline by default, free and open source.</p>
+  </div>
+  <div class="card">
+    <div class="label">You say</div>
+    <div class="said"><s>um</s> so <s>uh</s> run cube control get pods</div>
+    <div class="label">It types, in a terminal</div>
+    <code>so run kubectl get pods</code>
+  </div>
+</body>
+</html>
