@@ -3683,7 +3683,7 @@ dependencies = [
 
 [[package]]
 name = "opstrellis"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "active-win-pos-rs",
  "anyhow",
@@ -3720,6 +3720,7 @@ dependencies = [
  "tokio-tungstenite",
  "urlencoding",
  "uuid",
+ "zbus 5.19.0",
 ]
 
 [[package]]

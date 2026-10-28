@@ -36,7 +36,14 @@ fn parse(s: &str) -> Result<Shortcut> {
 pub fn register(app: &Arc<App>, startup: bool) -> Result<()> {
     let s = app.settings();
     let all = [(&s.hotkeys.dictate, Action::Dictate), (&s.hotkeys.command, Action::Command), (&s.hotkeys.paste_last, Action::PasteLast)];
-    let single = single_key(&all)?;
+    let mut single = single_key(&all)?;
+    let mut unsupported = None;
+    // Only macOS can watch a single key. One stored elsewhere (settings copied from a Mac or edited
+    // by hand) is skipped, so the other shortcuts and the fallback keep working.
+    if let Some((key, _)) = single.filter(|_| !cfg!(target_os = "macos")) {
+        unsupported = Some(format!("{} can't be a shortcut on this system, so {FALLBACK} is used instead. Choose a key combination in Settings → Shortcuts.", key.name()));
+        single = None;
+    }
     let wanted = all.iter().filter(|(k, _)| fnkey::Key::parse(k).is_none()).map(|(k, a)| Ok((parse(k)?, *a))).collect::<Result<Vec<_>>>()?;
     let mut ids: Vec<u32> = wanted.iter().map(|(sc, _)| sc.id()).collect();
     ids.sort_unstable();
@@ -87,6 +94,10 @@ pub fn register(app: &Arc<App>, startup: bool) -> Result<()> {
             app.report_error(&fnkey::permission_error());
         }
     }
+    if let Some(msg) = unsupported {
+        *app.hotkey_error.lock().unwrap() = Some(msg.clone());
+        app.report_error(&msg);
+    }
     Ok(())
 }
 
@@ -109,9 +120,6 @@ fn single_key(all: &[(&String, Action)]) -> Result<Option<(fnkey::Key, Action)>>
     let first = singles.next();
     if singles.next().is_some() {
         return Err(anyhow!("Only one shortcut can be a single key like Fn or Right Option"));
-    }
-    if first.is_some() && !cfg!(target_os = "macos") {
-        return Err(anyhow!("Single-key shortcuts like Fn only work on macOS"));
     }
     if matches!(first, Some((_, Action::PasteLast))) {
         return Err(anyhow!("Paste last needs a key combination, not a single key"));
@@ -212,12 +220,9 @@ mod tests {
         assert!(bind("Fn", "Fn", "Ctrl+Alt+V").is_err(), "Fn bound twice");
         assert!(bind("Fn", "RightOption", "Ctrl+Alt+V").is_err(), "two single-key shortcuts");
         assert!(bind("Ctrl+Shift+Space", "Ctrl+Alt+Space", "Fn").is_err(), "paste last can't be a single key");
-        if cfg!(target_os = "macos") {
-            assert_eq!(bind("Fn", "Ctrl+Alt+Space", "Ctrl+Alt+V").unwrap(), Some((Key::Fn, Action::Dictate)));
-            assert_eq!(bind("Ctrl+Shift+Space", "RightOption", "Ctrl+Alt+V").unwrap(), Some((Key::RightOption, Action::Command)));
-        } else {
-            assert!(bind("Fn", "Ctrl+Alt+Space", "Ctrl+Alt+V").is_err(), "single keys are macOS only");
-        }
+        // Off macOS, `register` skips them.
+        assert_eq!(bind("Fn", "Ctrl+Alt+Space", "Ctrl+Alt+V").unwrap(), Some((Key::Fn, Action::Dictate)));
+        assert_eq!(bind("Ctrl+Shift+Space", "RightOption", "Ctrl+Alt+V").unwrap(), Some((Key::RightOption, Action::Command)));
         // Single keys are never parsed as regular global shortcuts.
         for k in ["Fn", "RightCommand", "RightOption", "RightControl", "RightShift"] {
             assert!(parse(k).is_err(), "{k}");

@@ -88,7 +88,22 @@ export interface Permissions {
   inputMonitoring: boolean | null;
   /** What macOS itself does on an Fn press ("shows Emoji & Symbols"), when Fn is a shortcut. */
   fnSystemAction: string | null;
+  /** null unless Wayland. */
+  waylandShortcuts: WaylandShortcuts | null;
+  /** null unless Wayland: whether a tool can send the paste keys. */
+  insertion: InsertionStatus | null;
 }
+/** The desktop's GlobalShortcuts portal session (Wayland). `trigger` is empty when no key is assigned. */
+export type PortalState =
+  | { state: "unavailable" } | { state: "binding" } | { state: "failed"; error: string }
+  | { state: "bound"; shortcuts: { id: "dictate" | "command" | "paste-last"; trigger: string }[] };
+export interface WaylandShortcuts {
+  portal: PortalState;
+  gnome: boolean;
+  /** OpsTrellis's GNOME custom shortcuts (running `opstrellis --toggle`, …) are set up. */
+  gnomeShortcuts: boolean;
+}
+export interface InsertionStatus { ready: "wtype" | "ydotool" | null; problem: string | null; fix: string | null }
 export interface PolishModel { name: string; sizeMb: number; installed: boolean; downloading: boolean }
 export interface ModelDownload { id: string; downloaded: number; total: number; done: boolean; error: string | null }
 
@@ -113,6 +128,8 @@ export interface Events {
   "meeting-status": null;
   /** Settings changed outside this window (tray). */
   "settings-changed": Settings;
+  /** Something `permissions()` reports changed (e.g. the desktop bound the Wayland shortcuts). */
+  "permissions-changed": null;
 }
 
 export interface MeetingStatus { active: boolean; finishing: boolean; startedAt: string | null; transcript: string }
@@ -192,6 +209,10 @@ export const api = {
   requestAccessibility: () => call<void>("request_accessibility"),
   requestInputMonitoring: () => call<void>("request_input_monitoring"),
   setShortcutRecording: (on: boolean) => call<void>("set_shortcut_recording", { on }),
+  /** Wayland: ask the desktop to bind the shortcuts again (GlobalShortcuts portal). */
+  rebindWaylandShortcuts: () => call<void>("rebind_wayland_shortcuts"),
+  /** GNOME without the portal: add custom shortcuts that run `opstrellis --toggle` and friends. */
+  addGnomeShortcuts: () => call<void>("add_gnome_shortcuts"),
   openLogs: () => call<void>("open_logs"),
   version: () => (isTauri ? getVersion() : Promise.resolve("dev")),
 };

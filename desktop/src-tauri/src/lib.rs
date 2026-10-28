@@ -15,6 +15,7 @@ mod settings;
 mod stt;
 mod terms;
 mod text;
+mod wayland;
 
 use pipeline::Mode;
 use serde_json::{json, Value};
@@ -510,17 +511,39 @@ fn meeting_status(app: State) -> notetaker::MeetingStatus {
     notetaker::status(&app)
 }
 
+/// Async so the Wayland checks (they run wtype and gsettings) stay off the main thread.
 #[tauri::command]
-fn permissions(app: State) -> Value {
-    json!({
+async fn permissions(app: State<'_>) -> Res<Value> {
+    Ok(json!({
         "hotkeyError": app.hotkey_error.lock().unwrap().clone(),
         "accessibility": insert::accessibility_granted(false),
         "platform": if cfg!(target_os = "macos") { "macos" } else { "linux" },
         "wayland": insert::is_wayland(),
+        // null unless Wayland.
+        "waylandShortcuts": insert::is_wayland().then(wayland::status),
+        "insertion": insert::is_wayland().then(insert::wayland_tools_status),
         // null unless Fn is a shortcut.
         "inputMonitoring": fnkey::active(),
         "fnSystemAction": if fnkey::fn_bound() { fnkey::system_action() } else { None },
-    })
+    }))
+}
+
+/// Asks the desktop to bind the shortcuts again (Wayland, GlobalShortcuts portal).
+#[tauri::command]
+fn rebind_wayland_shortcuts(app: State) -> Res<()> {
+    wayland::rebind(app.inner()).map_err(|e| format!("{e:#}"))
+}
+
+/// Adds GNOME custom shortcuts that run `opstrellis --toggle` and friends (Wayland without the portal).
+#[tauri::command]
+async fn add_gnome_shortcuts(app: State<'_>) -> Res<()> {
+    wayland::add_gnome_shortcuts(&app.settings()).map_err(|e| format!("{e:#}"))
+}
+
+/// Settings → Permissions reloads on this (e.g. the desktop bound the Wayland shortcuts).
+#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+pub(crate) fn emit_permissions_changed(app: &App) {
+    let _ = app.handle.emit("permissions-changed", ());
 }
 
 #[tauri::command]
@@ -679,7 +702,7 @@ fn show_main(handle: &AppHandle) {
 }
 
 /// CLI control for desktops where global shortcuts can't be grabbed (Wayland): bind
-/// `opstrellis --toggle`, `opstrellis --command` and `opstrellis --cancel` to keys in the desktop's settings.
+/// `opstrellis --toggle`, `--command`, `--paste-last` and `--cancel` to keys in the desktop's settings.
 fn handle_cli(app: &Arc<App>, args: &[String]) -> bool {
     if args.iter().any(|a| a == "--toggle") {
         app.toggle(Mode::Dictate);
@@ -687,6 +710,13 @@ fn handle_cli(app: &Arc<App>, args: &[String]) -> bool {
         app.toggle(Mode::Command);
     } else if args.iter().any(|a| a == "--cancel") {
         app.cancel();
+    } else if args.iter().any(|a| a == "--paste-last") {
+        let app = app.clone();
+        tauri::async_runtime::spawn(async move {
+            if let Err(e) = app.paste_last().await {
+                app.report_error(&format!("{e:#}"));
+            }
+        });
     } else {
         return false;
     }
@@ -783,6 +813,7 @@ pub fn run() {
                     app.report_error(&format!("{e:#}"));
                 }
             }
+            wayland::start(&app);
             create_overlay(tapp)?;
             apply_theme(&app.handle, &app.settings().theme);
             apply_retention(&app);
@@ -859,6 +890,7 @@ pub fn run() {
             list_local_models, download_local_model, delete_local_model, polish_model_status, download_polish_model, delete_polish_model, test_stt, test_llm,
             start_dictation, stop_dictation, cancel_dictation, paste_last,
             cloud_login, cloud_logout, cloud_status, permissions, request_accessibility, request_input_monitoring, open_logs,
+            rebind_wayland_shortcuts, add_gnome_shortcuts,
             set_shortcut_recording,
             meeting_start, meeting_stop, meeting_status, meeting_templates, meeting_follow_up
         ])

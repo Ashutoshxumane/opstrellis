@@ -98,9 +98,11 @@ type Outcome = { kind: "ok" | "warn" | "error"; message: string };   // how a di
 | `paste_last` | – | – |
 | `cloud_login` | – | `{ userCode: string, verificationUrl: string }` (opens browser, polls in background, emits `cloud-status`) |
 | `cloud_logout` / `cloud_status` | – | `CloudStatus` |
-| `permissions` | – | `{ accessibility: boolean, platform: "macos" \| "linux", wayland: boolean, hotkeyError: string \| null, inputMonitoring: boolean \| null, fnSystemAction: string \| null }` (the last two are null unless the Fn key is a shortcut) |
+| `permissions` | – | `{ accessibility: boolean, platform: "macos" \| "linux", wayland: boolean, hotkeyError: string \| null, inputMonitoring: boolean \| null, fnSystemAction: string \| null, waylandShortcuts: { portal: { state: "unavailable" \| "binding" \| "bound" \| "failed", shortcuts?: { id, trigger }[], error?: string }, gnome: boolean, gnomeShortcuts: boolean } \| null, insertion: { ready: "wtype" \| "ydotool" \| null, problem: string \| null, fix: string \| null } \| null }` (`inputMonitoring` and `fnSystemAction` are null unless the Fn key is a shortcut; the last two are null unless Wayland) |
 | `request_accessibility` | – | – (macOS prompt) |
 | `request_input_monitoring` | – | – (macOS prompt the first time, then opens System Settings → Input Monitoring) |
+| `rebind_wayland_shortcuts` | – | – (Wayland: asks the desktop's GlobalShortcuts portal to bind the shortcuts again) |
+| `add_gnome_shortcuts` | – | – (GNOME without the portal: adds custom shortcuts running `opstrellis --toggle`, `--command`, `--paste-last` with the configured keys) |
 | `set_shortcut_recording` | `{ on }` | – (shortcut recorder open: shortcuts are paused so pressing one records it; macOS single keys arrive as `shortcut-captured`) |
 | `open_logs` | – | – (reveals `opstrellis.log` in Finder / the file manager) |
 
@@ -116,6 +118,7 @@ type Outcome = { kind: "ok" | "warn" | "error"; message: string };   // how a di
 | `dictation-outcome` | `Outcome` (pill: inserted / copied / warning / error) |
 | `meeting-status` | – (a meeting recording started or stopped, also from the tray) |
 | `settings-changed` | `Settings` (changed outside the window, e.g. the tray's AI polish toggle) |
+| `permissions-changed` | – (something `permissions` reports changed, e.g. the desktop bound the Wayland shortcuts) |
 | `shortcut-captured` | `string` (a single key such as `"Fn"` or `"RightOption"`, pressed on its own while the recorder is open; macOS) |
 | `history-updated` | – |
 | `model-download` | `{ id: string, downloaded: number, total: number, done: boolean, error: string \| null }` |

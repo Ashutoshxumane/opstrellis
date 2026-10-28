@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, errMsg, useEvent, type DictationState, type Settings } from "./api";
+import { api, errMsg, useEvent, type DictationState, type Permissions, type Settings } from "./api";
 import { Icon, Logo, type IconName } from "./icons";
 import { applyTheme, comboText, IS_MAC, isDarkTheme, PageGroup, Tabs, type SetSetting } from "./ui";
 import Home from "./pages/Home";
@@ -67,8 +67,21 @@ export default function App() {
     // A reload while the shortcut recorder was open would leave the shortcuts paused.
     api.setShortcutRecording(false).catch(() => {});
     // A shortcut that failed to register at startup was reported before we were listening.
-    api.permissions().then((p) => p.hotkeyError && setToast(`Shortcut unavailable: ${p.hotkeyError}`), () => {});
+    api.permissions().then((p) => {
+      if (p.hotkeyError) setToast(`Shortcut unavailable: ${p.hotkeyError}`);
+      else checkWaylandShortcuts(p);
+    }, () => {});
   }, []);
+
+  // On Wayland the shortcuts only work once the desktop has them; say so instead of looking ready.
+  const waylandNoticeShown = useRef(false);
+  function checkWaylandShortcuts(p: Permissions) {
+    const ws = p.waylandShortcuts;
+    if (!ws || waylandNoticeShown.current || ws.gnomeShortcuts || ws.portal.state === "binding" || ws.portal.state === "bound") return;
+    waylandNoticeShown.current = true;
+    setToast("Shortcuts need setting up on Wayland. See Settings → Shortcuts.");
+  }
+  useEvent("permissions-changed", () => void api.permissions().then(checkWaylandShortcuts, () => {}));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

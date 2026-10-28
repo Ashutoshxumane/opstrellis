@@ -120,8 +120,31 @@ are kept. To check the installed version, run `opstrellis --version` or open Set
   the Dock and ⌘Tab (Linux: the dock and taskbar). It keeps running and opens from its menu bar /
   tray icon.
 - **Voice commands while dictating:** "new line", "new paragraph", "scratch that", "press enter".
-- **Wayland:** compositors don't let apps grab keys, so bind `opstrellis --toggle`,
-  `opstrellis --command` and `opstrellis --cancel` to shortcuts in your desktop settings.
+- **Wayland:** apps can't grab keys there, so OpsTrellis asks your desktop for the shortcuts
+  instead. See [Linux on Wayland](#linux-on-wayland).
+
+### Linux on Wayland
+
+- **Shortcuts:** on GNOME 48 or later and KDE Plasma, OpsTrellis asks the desktop for its shortcuts
+  when it starts. Click **Add** in the desktop's dialog; hold-to-talk then works as usual. Change
+  the keys in GNOME Settings → Apps → OpsTrellis (KDE: System Settings → Shortcuts). GNOME needs
+  the app-menu entry that `install.sh` (or the .deb) adds to allow this.
+- **Older GNOME** (Ubuntu 24.04 and earlier): Settings → Shortcuts → **Add shortcuts** creates GNOME
+  custom shortcuts that run `opstrellis --toggle`, `--command` and `--paste-last`. They start and
+  finish with a press each; holding to talk isn't possible that way.
+- **Other desktops:** bind `opstrellis --toggle`, `--command`, `--paste-last` and `--cancel` to keys
+  in your desktop's keyboard settings.
+- **Pasting** needs a tool that sends keys. GNOME doesn't support `wtype`, so it needs `ydotool`,
+  whose service needs access to `/dev/uinput`:
+
+  ```sh
+  sudo apt install ydotool
+  sudo usermod -aG input $USER
+  # then restart the computer: logging out isn't enough, because the user session keeps running
+  ```
+
+  On wlroots desktops (Sway, Hyprland) and KDE, `sudo apt install wtype` is enough. Settings →
+  Permissions → **Text insertion** says what's missing.
 
 ## Features
 
@@ -212,7 +235,8 @@ In the desktop app, open **Settings → Account**, set the server URL and sign i
 | 🌐 fn or another single-key shortcut does nothing | Grant **Input Monitoring**, then quit and reopen OpsTrellis. **Ctrl+Shift+Space** works meanwhile. |
 | "You switched to …", text on the clipboard | The focused window changed while processing, so OpsTrellis didn't paste into the wrong place. Paste with ⌘V / Ctrl+V. |
 | Slow or wrong results | Settings → Transcription: try another model or provider. Settings → About → **Show logs** shows the time each step took. |
-| Shortcuts don't work on Wayland | Bind the `opstrellis --toggle / --command / --cancel` commands in your desktop's keyboard settings. |
+| Shortcuts don't work on Wayland | Settings → Shortcuts shows what your desktop supports and sets it up. See [Linux on Wayland](#linux-on-wayland). |
+| Text isn't pasted on Wayland | Settings → Permissions → **Text insertion** says what's missing (usually `ydotool` and the `input` group, then a restart). |
 
 Found a bug or have an idea? [Open an issue](https://github.com/mtr1920/opstrellis/issues).
 
@@ -249,7 +273,7 @@ npx tauri build --bundles app,dmg      # macOS app (Linux: --bundles deb,appimag
 - **Live cloud providers:** OpenAI, Deepgram, AssemblyAI, Google, Azure, ElevenLabs, Groq,
   Anthropic and Stripe are implemented against their current APIs and tested on request and
   response shapes; live tests run when keys are set ([docs/TESTING.md](docs/TESTING.md)).
-- **Wayland:** global shortcuts need the CLI commands above; the pill may take focus on some
+- **Wayland:** hold-to-talk needs the desktop's shortcut portal (GNOME 48+, KDE Plasma); the pill may take focus on some
   compositors (it can be turned off in Settings), and some Wayland docks ignore **Show in Dock**.
 - **Not yet:** learning from edits you make inside other apps after insertion, team-shared
   dictionaries and snippets, Windows and mobile apps. Plans are in
