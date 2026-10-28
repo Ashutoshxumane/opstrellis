@@ -61,3 +61,5 @@ strip = true
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18"
 cpal = { version = "0.18", features = ["pulseaudio"] }
+# The XDG GlobalShortcuts portal (Wayland shortcuts); already used by the single-instance plugin.
+zbus = "5"

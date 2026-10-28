@@ -156,9 +156,7 @@ impl Inserter {
 fn send(combo: Combo) -> Result<()> {
     wait_for_keys_released();
     if is_wayland() {
-        if let Some(r) = send_wayland(combo) {
-            return r;
-        }
+        return run_wayland(|tool| combo_args(tool, combo).iter().map(|a| a.to_string()).collect());
     }
     let mut e = Enigo::new(&enigo::Settings::default()).map_err(|e| anyhow!("Cannot simulate keys: {e}. {}", permission_hint()))?;
     let modifier = if cfg!(target_os = "macos") { Key::Meta } else { Key::Control };
@@ -185,49 +183,57 @@ fn send(combo: Combo) -> Result<()> {
     Ok(())
 }
 
-/// Returns None when no Wayland input tool is installed (falls back to enigo/XWayland).
-fn send_wayland(combo: Combo) -> Option<Result<()>> {
-    let run = |cmd: &str, args: &[&str]| -> Result<()> {
-        let st = Command::new(cmd).args(args).status()?;
-        if st.success() {
-            Ok(())
-        } else {
-            Err(anyhow!("{cmd} failed ({st})"))
-        }
-    };
-    if has_tool("wtype") {
-        let args: &[&str] = match combo {
-            Combo::Paste => &["-M", "ctrl", "-k", "v", "-m", "ctrl"],
-            Combo::Copy => &["-M", "ctrl", "-k", "c", "-m", "ctrl"],
-            Combo::TerminalPaste => &["-M", "ctrl", "-M", "shift", "-k", "v", "-m", "shift", "-m", "ctrl"],
-            Combo::TerminalCopy => &["-M", "ctrl", "-M", "shift", "-k", "c", "-m", "shift", "-m", "ctrl"],
-            Combo::Enter => &["-k", "Return"],
-        };
-        return Some(run("wtype", args));
-    }
-    if has_tool("ydotool") {
+/// Tools that send keys on Wayland, in the order they're tried. wtype needs the compositor's
+/// virtual-keyboard protocol, which GNOME lacks; ydotool works everywhere but needs its daemon.
+const WAYLAND_TOOLS: [&str; 2] = ["wtype", "ydotool"];
+
+fn combo_args(tool: &str, combo: Combo) -> &'static [&'static str] {
+    match (tool, combo) {
+        ("wtype", Combo::Paste) => &["-M", "ctrl", "-k", "v", "-m", "ctrl"],
+        ("wtype", Combo::Copy) => &["-M", "ctrl", "-k", "c", "-m", "ctrl"],
+        ("wtype", Combo::TerminalPaste) => &["-M", "ctrl", "-M", "shift", "-k", "v", "-m", "shift", "-m", "ctrl"],
+        ("wtype", Combo::TerminalCopy) => &["-M", "ctrl", "-M", "shift", "-k", "c", "-m", "shift", "-m", "ctrl"],
+        ("wtype", Combo::Enter) => &["-k", "Return"],
         // Linux input event codes: 29 LEFTCTRL, 42 LEFTSHIFT, 47 V, 46 C, 28 ENTER.
-        let args: &[&str] = match combo {
-            Combo::Paste => &["key", "29:1", "47:1", "47:0", "29:0"],
-            Combo::Copy => &["key", "29:1", "46:1", "46:0", "29:0"],
-            Combo::TerminalPaste => &["key", "29:1", "42:1", "47:1", "47:0", "42:0", "29:0"],
-            Combo::TerminalCopy => &["key", "29:1", "42:1", "46:1", "46:0", "42:0", "29:0"],
-            Combo::Enter => &["key", "28:1", "28:0"],
-        };
-        return Some(run("ydotool", args));
+        (_, Combo::Paste) => &["key", "29:1", "47:1", "47:0", "29:0"],
+        (_, Combo::Copy) => &["key", "29:1", "46:1", "46:0", "29:0"],
+        (_, Combo::TerminalPaste) => &["key", "29:1", "42:1", "47:1", "47:0", "42:0", "29:0"],
+        (_, Combo::TerminalCopy) => &["key", "29:1", "42:1", "46:1", "46:0", "42:0", "29:0"],
+        (_, Combo::Enter) => &["key", "28:1", "28:0"],
     }
-    None
+}
+
+/// Runs the first installed Wayland key tool that works. Synthetic X11 keys only reach XWayland
+/// apps, so without a working tool this is an error rather than a paste that silently goes nowhere.
+fn run_wayland(args: impl Fn(&str) -> Vec<String>) -> Result<()> {
+    let mut failures = Vec::new();
+    for tool in WAYLAND_TOOLS.into_iter().filter(|t| has_tool(t)) {
+        match run_tool(tool, &args(tool)) {
+            Ok(()) => return Ok(()),
+            Err(e) => failures.push(format!("{e:#}")),
+        }
+    }
+    let why = if failures.is_empty() { "No tool to send keys is installed".to_string() } else { failures.join("; ") };
+    Err(anyhow!("{why}. {}", wayland_tools_status().fix.unwrap_or_else(|| permission_hint().to_string())))
+}
+
+/// Runs a key tool; a non-zero exit is an error (with its message) so the caller's fallback runs.
+fn run_tool(tool: &str, args: &[String]) -> Result<()> {
+    let out = Command::new(tool).args(args).output()?;
+    // ydotool reports on stdout, wtype on stderr.
+    let output = format!("{}\n{}", String::from_utf8_lossy(&out.stderr), String::from_utf8_lossy(&out.stdout));
+    let msg = output.lines().map(str::trim).find(|l| !l.is_empty()).unwrap_or("");
+    anyhow::ensure!(out.status.success(), "{tool} failed ({}){}", out.status, if msg.is_empty() { String::new() } else { format!(": {msg}") });
+    Ok(())
 }
 
 fn type_text(text: &str) -> Result<()> {
     wait_for_keys_released();
     if is_wayland() {
-        if has_tool("wtype") {
-            return run_ok(Command::new("wtype").arg("--").arg(text));
-        }
-        if has_tool("ydotool") {
-            return run_ok(Command::new("ydotool").args(["type", "--", text]));
-        }
+        return run_wayland(|tool| {
+            let lead = if tool == "wtype" { vec![] } else { vec!["type".to_string()] };
+            lead.into_iter().chain(["--".to_string(), text.to_string()]).collect()
+        });
     }
     let mut e = Enigo::new(&enigo::Settings::default()).map_err(|e| anyhow!("Cannot simulate keys: {e}. {}", permission_hint()))?;
     e.text(text)?;
@@ -274,11 +280,98 @@ pub fn wait_for_keys_released() -> bool {
     false
 }
 
-/// Runs a typing tool; a non-zero exit is an error so the caller's clipboard fallback runs.
-fn run_ok(cmd: &mut Command) -> Result<()> {
-    let st = cmd.status()?;
-    anyhow::ensure!(st.success(), "{:?} failed ({st})", cmd.get_program());
-    Ok(())
+/// Whether text can be pasted on Wayland, and if not, what the user has to do.
+#[derive(serde::Serialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ToolsStatus {
+    /// The tool that works: "wtype" or "ydotool".
+    pub ready: Option<&'static str>,
+    pub problem: Option<String>,
+    pub fix: Option<String>,
+}
+
+const RESTART: &str = "then restart your computer (logging out isn't enough, because the user session keeps running)";
+
+pub fn wayland_tools_status() -> ToolsStatus {
+    let gnome = crate::wayland::is_gnome();
+    // Typing nothing still needs the compositor's virtual-keyboard protocol, so this checks it
+    // without sending a key.
+    let wtype = has_tool("wtype").then(|| run_tool("wtype", &[String::new()]));
+    if matches!(wtype, Some(Ok(()))) {
+        return ToolsStatus { ready: Some("wtype"), ..Default::default() };
+    }
+    let wtype_note = match &wtype {
+        Some(Err(_)) if gnome => "GNOME doesn't support wtype. ",
+        Some(Err(_)) => "wtype doesn't work with this desktop. ",
+        _ => "",
+    };
+    if !has_tool("ydotool") {
+        let (problem, fix) = if gnome || wtype.is_some() {
+            ("ydotool isn't installed", format!("{wtype_note}Install ydotool (sudo apt install ydotool), add yourself to the input group (sudo usermod -aG input $USER), {RESTART}."))
+        } else {
+            ("No tool to send keys is installed", "Install wtype (sudo apt install wtype), or ydotool on GNOME.".to_string())
+        };
+        return ToolsStatus { ready: None, problem: Some(problem.into()), fix: Some(fix) };
+    }
+    if ydotool_daemon_running() {
+        return ToolsStatus { ready: Some("ydotool"), ..Default::default() };
+    }
+    let (problem, fix) = match uinput_access() {
+        Uinput::Ok => (
+            "The ydotool service isn't running".to_string(),
+            "Start it: systemctl --user enable --now ydotool".to_string(),
+        ),
+        Uinput::NeedsRestart => (
+            "You're in the input group, but this session started before you were added".to_string(),
+            "Restart your computer (logging out isn't enough, because the user session keeps running).".to_string(),
+        ),
+        Uinput::NotInGroup => (
+            "ydotool can't create its virtual keyboard (/dev/uinput)".to_string(),
+            format!("Add yourself to the input group (sudo usermod -aG input $USER), {RESTART}."),
+        ),
+    };
+    ToolsStatus { ready: None, problem: Some(problem), fix: Some(fix) }
+}
+
+/// ydotoold listens on a datagram socket, at the path the ydotool client uses.
+fn ydotool_daemon_running() -> bool {
+    #[cfg(unix)]
+    {
+        let path = std::env::var("YDOTOOL_SOCKET")
+            .map(std::path::PathBuf::from)
+            .or_else(|_| std::env::var("XDG_RUNTIME_DIR").map(|d| std::path::Path::new(&d).join(".ydotool_socket")))
+            .unwrap_or_else(|_| "/tmp/.ydotool_socket".into());
+        std::os::unix::net::UnixDatagram::unbound().and_then(|s| s.connect(path)).is_ok()
+    }
+    #[cfg(not(unix))]
+    false
+}
+
+enum Uinput {
+    Ok,
+    /// The input group lists the user, but this login session doesn't have it yet.
+    NeedsRestart,
+    NotInGroup,
+}
+
+fn uinput_access() -> Uinput {
+    if std::fs::OpenOptions::new().write(true).open("/dev/uinput").is_ok() {
+        return Uinput::Ok;
+    }
+    let groups = std::fs::read_to_string("/etc/group").unwrap_or_default();
+    let user = std::env::var("USER").unwrap_or_default();
+    let input = groups.lines().find(|l| l.starts_with("input:")).map(|l| l.split(':').collect::<Vec<_>>());
+    let listed = input.as_ref().is_some_and(|f| f.get(3).is_some_and(|m| m.split(',').any(|u| u == user)));
+    let gid = input.as_ref().and_then(|f| f.get(2).map(|g| g.to_string()));
+    let has = std::fs::read_to_string("/proc/self/status")
+        .ok()
+        .and_then(|s| s.lines().find(|l| l.starts_with("Groups:")).map(|l| l.split_whitespace().skip(1).any(|g| Some(g.to_string()) == gid)))
+        .unwrap_or(false);
+    if listed && !has {
+        Uinput::NeedsRestart
+    } else {
+        Uinput::NotInGroup
+    }
 }
 
 fn permission_hint() -> &'static str {

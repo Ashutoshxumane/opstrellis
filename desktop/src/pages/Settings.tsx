@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import {
-  api, errMsg, useEvent, type CloudStatus, type LocalModel, type Permissions, type PolishModel, type ProviderKind, type Settings, type SttEntry,
+  api, errMsg, useEvent, type CloudStatus, type LocalModel, type Permissions, type PolishModel, type WaylandShortcuts, type ProviderKind, type Settings, type SttEntry,
 } from "../api";
 import { Icon } from "../icons";
 import { IS_MAC, Keys, isSingleKey, Modal, Page, Progress, Row, Section, Toggle, comboText, useModelDownloads, type SettingsProps } from "../ui";
@@ -117,7 +117,7 @@ export default function SettingsPage(props: Props) {
             </Row>
           </SettingsSection>
 
-          <SettingsSection title="Permissions"><PermissionsInfo shortcuts={settings.hotkeys.dictate + " " + settings.hotkeys.command} /></SettingsSection>
+          <SettingsSection title="Permissions"><PermissionsInfo shortcuts={settings.hotkeys.dictate + " " + settings.hotkeys.command} withShortcutSetup={false} /></SettingsSection>
 
           <SettingsSection title="Transcription" desc="OpsTrellis uses the first enabled provider. If it fails, the next one takes over.">
             <Providers {...props} localIds={models.filter((m) => m.installed).map((m) => m.id)} />
@@ -344,8 +344,13 @@ function Shortcuts({ settings, set }: SettingsProps) {
     isSingleKey(hk[other]) ? `${SHORTCUT_NAMES[other]} already uses a single key; use a combination here` : true;
   const holdDesc = (base: string, value: string) =>
     isSingleKey(value) ? `${base} Double-tap for hands-free, press again to finish.` : `${base} Tap once for hands-free, tap again to finish.`;
+  const [perm, reload] = usePermissions();
+  const ws = perm?.waylandShortcuts;
+  // The desktop owns the keys then; the fields stay only to replace a single key it can't use.
+  if (ws?.portal.state === "bound" && !Object.values(hk).some(isSingleKey)) return <WaylandShortcutsSetup ws={ws} reload={reload} />;
   return (
     <>
+      {ws && <WaylandShortcutsSetup ws={ws} reload={reload} />}
       <Row title="Dictate" desc={holdDesc("Hold to talk.", hk.dictate)}>
         <HotkeyInput value={hk.dictate} onChange={(v) => update("dictate", v)} single={IS_MAC && single("command")} />
       </Row>
@@ -720,22 +725,113 @@ function About() {
 
 // ---------- Permissions ----------
 
-/** `shortcuts`: reloads when they change (choosing Fn needs Input Monitoring), after the settings save. */
-export function PermissionsInfo({ shortcuts }: { shortcuts?: string }) {
+/**
+ * The backend's permissions report. Reloads when `key` changes (after the debounced save
+ * re-registers the shortcuts), when the window regains focus (permissions are granted in the
+ * system's settings) and when the backend says something changed.
+ */
+function usePermissions(key?: string): [Permissions | null, () => void] {
   const [perm, setPerm] = useState<Permissions | null>(null);
-  const load = () => api.permissions().then(setPerm, () => {});
+  const load = () => void api.permissions().then(setPerm, () => {});
   const first = useRef(true);
   useEffect(() => {
-    // After a change, wait for the debounced save to re-register the shortcuts.
     const t = setTimeout(load, first.current ? 0 : 800);
     first.current = false;
     return () => clearTimeout(t);
-  }, [shortcuts]);
-  // Permissions are granted in System Settings; recheck on coming back.
+  }, [key]);
   useEffect(() => {
     window.addEventListener("focus", load);
     return () => window.removeEventListener("focus", load);
   }, []);
+  useEvent("permissions-changed", load);
+  return [perm, load];
+}
+
+const WAYLAND_SHORTCUT_NAMES: Record<string, string> = { dictate: "Dictate", command: "Command mode", "paste-last": "Paste last transcript" };
+
+/**
+ * Wayland doesn't let apps grab keys, so shortcuts go through the desktop: its GlobalShortcuts
+ * portal when it has one (hold-to-talk works), else GNOME custom shortcuts or the CLI commands.
+ */
+export function WaylandShortcutsSetup({ ws, reload }: { ws: WaylandShortcuts; reload: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const run = (f: () => Promise<void>) => {
+    setBusy(true);
+    setError(null);
+    f().then(reload, (e) => setError(errMsg(e))).finally(() => setBusy(false));
+  };
+  const p = ws.portal;
+
+  if (p.state === "bound") return (
+    <div className="row column">
+      <div className="row-text">
+        <div className="row-title">Shortcuts set by your desktop</div>
+        <div className="row-desc">
+          On Wayland your desktop handles global shortcuts. Hold to talk, or tap for hands-free.{" "}
+          {ws.gnome ? "To change the keys, open GNOME Settings → Apps → OpsTrellis." : "Change the keys in your desktop's shortcut settings."}
+        </div>
+      </div>
+      <table className="cmd-table">
+        <tbody>
+          {p.shortcuts.map((sc) => (
+            <tr key={sc.id}><td>{WAYLAND_SHORTCUT_NAMES[sc.id] ?? sc.id}</td><td>{sc.trigger ? <Keys combo={sc.trigger} /> : "No key assigned"}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  if (p.state === "binding") return (
+    <Row title="Wayland shortcuts" desc="Your desktop is asking you to approve OpsTrellis's shortcuts. Click Add in its dialog.">
+      <span className="tag">Waiting</span>
+    </Row>
+  );
+
+  return (
+    <div className="row column">
+      <div className="row-text">
+        <div className="row-title">Wayland shortcuts</div>
+        <div className="row-desc">
+          On Wayland apps can't listen for shortcuts themselves, so the keys below only work while an X11 app is focused.
+          {p.state === "failed" && ` Your desktop didn't set up OpsTrellis's shortcuts: ${p.error}.`}
+          {p.state === "unavailable" && " Your desktop can't hand shortcuts to apps (GNOME 48 or later and KDE Plasma can)."}
+        </div>
+      </div>
+      {p.state === "failed" && (
+        <div className="inline"><button className="btn primary" disabled={busy} onClick={() => run(api.rebindWaylandShortcuts)}>Try again</button></div>
+      )}
+      {ws.gnome ? (
+        <Row title={ws.gnomeShortcuts ? "GNOME custom shortcuts added" : "Add GNOME custom shortcuts"}
+          desc="Uses the keys below for dictation, command mode and paste last. They start and finish with a press each; holding to talk needs the desktop's shortcut support.">
+          <button className={"btn" + (ws.gnomeShortcuts ? "" : " primary")} disabled={busy} onClick={() => run(api.addGnomeShortcuts)}>
+            {ws.gnomeShortcuts ? "Update" : "Add shortcuts"}
+          </button>
+        </Row>
+      ) : (
+        <>
+          <div className="row-desc">Add custom shortcuts in your desktop's keyboard settings that run:</div>
+          <table className="cmd-table">
+            <tbody>
+              <tr><td className="mono">opstrellis --toggle</td><td>Start or finish dictation</td></tr>
+              <tr><td className="mono">opstrellis --command</td><td>Start command mode on the selection</td></tr>
+              <tr><td className="mono">opstrellis --paste-last</td><td>Paste the last transcript</td></tr>
+              <tr><td className="mono">opstrellis --cancel</td><td>Cancel the current recording</td></tr>
+            </tbody>
+          </table>
+        </>
+      )}
+      {error && <div className="error">{error}</div>}
+    </div>
+  );
+}
+
+/**
+ * `shortcuts`: reloads when they change (choosing Fn needs Input Monitoring).
+ * `withShortcutSetup`: include the Wayland shortcut setup (Settings shows it under Shortcuts instead).
+ */
+export function PermissionsInfo({ shortcuts, withShortcutSetup = true }: { shortcuts?: string; withShortcutSetup?: boolean }) {
+  const [perm, load] = usePermissions(shortcuts);
   if (!perm) return null;
 
   return (
@@ -763,21 +859,14 @@ export function PermissionsInfo({ shortcuts }: { shortcuts?: string }) {
       {perm.platform === "linux" && !perm.wayland && (
         <Row title="Global shortcuts" desc="Running on X11: shortcuts work out of the box."><span className="tag ok">Ready</span></Row>
       )}
-      {perm.wayland && (
-        <div className="row column">
-          <div className="row-title">Wayland shortcuts</div>
-          <div className="row-desc">
-            Wayland doesn't let apps listen for global shortcuts. Add custom shortcuts in your desktop settings
-            (GNOME: Settings → Keyboard → Custom Shortcuts; KDE: System Settings → Shortcuts) that run:
-          </div>
-          <table className="cmd-table">
-            <tbody>
-              <tr><td className="mono">opstrellis --toggle</td><td>Start or finish dictation</td></tr>
-              <tr><td className="mono">opstrellis --cancel</td><td>Cancel the current recording</td></tr>
-              <tr><td className="mono">opstrellis --command</td><td>Start command mode on the selection</td></tr>
-            </tbody>
-          </table>
-        </div>
+      {perm.waylandShortcuts && withShortcutSetup && <WaylandShortcutsSetup ws={perm.waylandShortcuts} reload={load} />}
+      {perm.insertion && (
+        <Row title="Text insertion"
+          desc={perm.insertion.ready
+            ? `Pastes into Wayland apps with ${perm.insertion.ready}.`
+            : `${perm.insertion.problem}, so text can't be pasted into Wayland apps (it's left on your clipboard). ${perm.insertion.fix}`}>
+          {perm.insertion.ready ? <span className="tag ok">Ready</span> : <button className="btn" onClick={load}>Check again</button>}
+        </Row>
       )}
     </>
   );

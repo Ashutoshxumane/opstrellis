@@ -3720,6 +3720,7 @@ dependencies = [
  "tokio-tungstenite",
  "urlencoding",
  "uuid",
+ "zbus 5.19.0",
 ]
 
 [[package]]
